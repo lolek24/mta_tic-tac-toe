@@ -1,9 +1,29 @@
-.sapMFlexBox.demoBox {
-	border-radius: 10px;
-	background-color: #1d5786;
-	text-align: center;
-}
-.demoBox .sapMTitle,
-.demoBox .sapMText {
+
+.sapUiLayoutCSSGrid .stylePageLayout {
+	background-color: #3b6f9a;
 	color: #ffffff;
+	border-radius: 5px;
+	display: flex;
+	align-items: center;
+    justify-content: center;
+    
 }
+.sapUiLayoutCSSGridItem {
+    background-color: #3b6f9a;
+    border: 1px transparent solid;
+    border-radius: 5px;
+    mix-blend-mode: screen;
+    background-size: 75%;
+    background-repeat: no-repeat;
+    background-position: center;
+    align-items: center;
+    justify-content: center;
+    transition: 1s;
+
+}
+.sapUiLayoutCSSGridItem:hover {
+    background-color:  #73a6cfbe;
+    border: 1px white solid;
+    transition: 1s;
+  } 
+

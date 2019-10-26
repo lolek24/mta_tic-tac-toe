@@ -16,33 +16,36 @@
 						<grid:CSSGrid id="board" gridTemplateColumns="repeat(3, 1fr)" gridTemplateRows="repeat(3, 150px)" gridGap="0.5rem">
 							<grid:items>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
-									 <sap.ui.core:Icon src="sap-icon://decline" size="5em" xmlns:sap.ui.core="sap.ui.core" id="icon1"/>
+									<Title text="1" wrapping="true" />
+									<sap.ui.core:Icon src="sap-icon://decline" size="5em" 
+										xmlns:sap.ui.core="sap.ui.core" id="icon1"/>
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
-									<sap.ui.core:Icon src="sap-icon://circle-task" size="5em" xmlns:sap.ui.core="sap.ui.core" id="icon2"/>
+									<Title text="2" wrapping="true" />
+									<sap.ui.core:Icon src="sap-icon://appear-offline" size="5em" 
+										xmlns:sap.ui.core="sap.ui.core" id="icon2"/>
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="3" wrapping="true" />
+									<Text text="A Box subtitle" wrapping="true" />
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="4" wrapping="true" />
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="5" wrapping="true" />
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="6" wrapping="true" />
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="7" wrapping="true" />
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="8" wrapping="true" />
 								</VBox>
 								<VBox class="demoBox">
-									<Title text="A Box" wrapping="true" />
+									<Title text="9" wrapping="true" />
 								</VBox>
 							</grid:items>
 						</grid:CSSGrid>
