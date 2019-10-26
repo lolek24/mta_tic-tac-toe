@@ -1,0 +1,43 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
+	<Shell id="shell">
+		<App id="app">
+			<pages>
+				<Page id="page" title="{i18n>title}">
+					<content>
+						<Bar id="bar0">
+							<contentLeft>
+								<Button xmlns="sap.m" text="New Game" id="new"/>
+							</contentLeft>
+						</Bar>
+						<Table noDataText="Drop column list items here and columns in the area above" id="bord">
+							<items>
+								<ColumnListItem type="Active" id="item1">
+									<cells>
+										<Button xmlns="sap.m" text="" id="button2"/>
+										<Button xmlns="sap.m" text="" id="button1"/>
+										<Button xmlns="sap.m" text="" id="button0"/>
+									</cells>
+									<cells>
+										<Button xmlns="sap.m" text="" id="button5"/>
+										<Button xmlns="sap.m" text="" id="button4"/>
+										<Button xmlns="sap.m" text="" id="button3"/>
+									</cells>
+									<cells>
+										<Button xmlns="sap.m" text="" id="button8"/>
+										<Button xmlns="sap.m" text="" id="button7"/>
+										<Button xmlns="sap.m" text="" id="button6"/>
+									</cells>
+								</ColumnListItem>
+							</items>
+							<columns>
+								<Column id="column1"></Column>
+								<Column id="column2"></Column>
+								<Column id="column3"></Column>
+							</columns>
+						</Table>
+					</content>
+				</Page>
+			</pages>
+		</App>
+	</Shell>
+</mvc:View>
