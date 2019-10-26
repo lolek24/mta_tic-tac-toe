@@ -1,4 +1,8 @@
-<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
+<mvc:View xmlns:mvc="sap.ui.core.mvc" 
+	xmlns:grid="sap.ui.layout.cssgrid" 
+	xmlns:form="sap.ui.layout.form" 
+	xmlns:core="sap.ui.core" 
+	xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
 	<Shell id="shell">
 		<App id="app">
 			<pages>
@@ -9,32 +13,39 @@
 								<Button xmlns="sap.m" text="New Game" id="new"/>
 							</contentLeft>
 						</Bar>
-						<Table noDataText="Drop column list items here and columns in the area above" id="bord">
-							<items>
-								<ColumnListItem type="Active" id="item1">
-									<cells>
-										<Button xmlns="sap.m" text="" id="button2"/>
-										<Button xmlns="sap.m" text="" id="button1"/>
-										<Button xmlns="sap.m" text="" id="button0"/>
-									</cells>
-									<cells>
-										<Button xmlns="sap.m" text="" id="button5"/>
-										<Button xmlns="sap.m" text="" id="button4"/>
-										<Button xmlns="sap.m" text="" id="button3"/>
-									</cells>
-									<cells>
-										<Button xmlns="sap.m" text="" id="button8"/>
-										<Button xmlns="sap.m" text="" id="button7"/>
-										<Button xmlns="sap.m" text="" id="button6"/>
-									</cells>
-								</ColumnListItem>
-							</items>
-							<columns>
-								<Column id="column1"></Column>
-								<Column id="column2"></Column>
-								<Column id="column3"></Column>
-							</columns>
-						</Table>
+						<grid:CSSGrid id="board" gridTemplateColumns="repeat(3, 1fr)" gridTemplateRows="repeat(3, 150px)" gridGap="0.5rem">
+							<grid:items>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+									 <sap.ui.core:Icon src="sap-icon://decline" size="5em" xmlns:sap.ui.core="sap.ui.core" id="icon1"/>
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+									<sap.ui.core:Icon src="sap-icon://circle-task" size="5em" xmlns:sap.ui.core="sap.ui.core" id="icon2"/>
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+								<VBox class="demoBox">
+									<Title text="A Box" wrapping="true" />
+								</VBox>
+							</grid:items>
+						</grid:CSSGrid>
 					</content>
 				</Page>
 			</pages>

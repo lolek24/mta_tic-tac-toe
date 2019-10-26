@@ -1,1 +1,9 @@
-/* Enter your custom styles here */
+.sapMFlexBox.demoBox {
+	border-radius: 10px;
+	background-color: #1d5786;
+	text-align: center;
+}
+.demoBox .sapMTitle,
+.demoBox .sapMText {
+	color: #ffffff;
+}
