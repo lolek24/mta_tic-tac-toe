@@ -1,8 +1,4 @@
-<mvc:View xmlns:mvc="sap.ui.core.mvc" 
-	xmlns:grid="sap.ui.layout.cssgrid" 
-	xmlns:form="sap.ui.layout.form" 
-	xmlns:core="sap.ui.core" 
-	xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
+<View xmlns:mvc="sap.ui.core.mvc" xmlns:grid="sap.ui.layout.cssgrid" xmlns:form="sap.ui.layout.form" xmlns:customContainers="com.tic-tac-toe.custom.ui.containers" xmlns:core="sap.ui.core" xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
 	<Shell id="shell">
 		<App id="app">
 			<pages>
@@ -10,43 +6,23 @@
 					<content>
 						<Bar id="bar0">
 							<contentLeft>
-								<Button xmlns="sap.m" text="New Game" id="new"/>
+								<Button xmlns="sap.m" text="New Game" id="new" press="onPress" />
 							</contentLeft>
+							<contentMiddle>
+								<Slider xmlns="sap.m" value="{board>/boardConfig/wValue}" id="slider1" liveChange="onSliderEvent" max="10" min="3" />
+							</contentMiddle>
+							<contentRight>
+								<Slider xmlns="sap.m" value="{board>/boardConfig/hValue}" id="slider2" max="10" min="3" />
+							</contentRight>
 						</Bar>
-						<grid:CSSGrid id="board" gridTemplateColumns="repeat(3, 1fr)" gridTemplateRows="repeat(3, 150px)" gridGap="0.5rem">
+						<grid:CSSGrid id="board" gridTemplateColumns="repeat({board>/boardConfig/wValue}, 1fr)" gridTemplateRows="repeat({board>/boardConfig/hValue}, 150px)" gridGap="0.5rem">
 							<grid:items>
-								<VBox class="demoBox">
-									<Title text="1" wrapping="true" />
-									<sap.ui.core:Icon src="sap-icon://decline" size="5em" 
-										xmlns:sap.ui.core="sap.ui.core" id="icon1"/>
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="2" wrapping="true" />
-									<sap.ui.core:Icon src="sap-icon://appear-offline" size="5em" 
-										xmlns:sap.ui.core="sap.ui.core" id="icon2"/>
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="3" wrapping="true" />
-									<Text text="A Box subtitle" wrapping="true" />
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="4" wrapping="true" />
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="5" wrapping="true" />
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="6" wrapping="true" />
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="7" wrapping="true" />
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="8" wrapping="true" />
-								</VBox>
-								<VBox class="demoBox">
-									<Title text="9" wrapping="true" />
-								</VBox>
+								<customContainers:customControl id="field1" press="onPress" icon="{path: 'Status'}">
+
+								</customContainers:customControl>
+								<customContainers:customControl id="field2" press="onPress" icon="sap-icon://decline">
+
+								</customContainers:customControl>
 							</grid:items>
 						</grid:CSSGrid>
 					</content>
@@ -54,4 +30,4 @@
 			</pages>
 		</App>
 	</Shell>
-</mvc:View>
+</View>
