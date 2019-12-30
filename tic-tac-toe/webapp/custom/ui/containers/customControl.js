@@ -59,8 +59,8 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
       oRm.write('<div');
       oRm.writeControlData(oControl);
       //oRm.addStyle("background-color", "blue");
-      oRm.addStyle('width', oControl.getProperty('width'));
-      oRm.addStyle('height', oControl.getProperty('height'));
+      //oRm.addStyle('width', oControl.getProperty('width'));
+      //oRm.addStyle('height', oControl.getProperty('height'));
       oRm.writeStyles();
       oRm.write('>');
 

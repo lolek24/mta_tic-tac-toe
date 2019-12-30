@@ -19,12 +19,14 @@
 									min="3" />
 							</contentRight>
 						</Bar>
-						<html:div class="htmlBoard">
-							<grid:CSSGrid id="board" gridTemplateColumns="repeat({board>/boardConfig/wValue}, 1fr)"
-								gridTemplateRows="repeat({board>/boardConfig/hValue}, 150px)" gridGap="0.5rem">
+						<VBox height="80%" alignItems="Center">
+							<grid:CSSGrid id="board"
+								gridTemplateColumns="repeat({board>/boardConfig/wValue}, minmax(100px, 200px))"
+								gridTemplateRows="repeat({board>/boardConfig/hValue}, minmax(100px, 200px))"
+								gridGap="0.5rem">
 
 							</grid:CSSGrid>
-						</html:div>
+						</VBox>
 					</content>
 				</Page>
 			</pages>
