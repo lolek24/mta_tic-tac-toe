@@ -1,4 +1,6 @@
-<View xmlns:mvc="sap.ui.core.mvc" xmlns:grid="sap.ui.layout.cssgrid" xmlns:form="sap.ui.layout.form" xmlns:customContainers="com.tic-tac-toe.custom.ui.containers" xmlns:core="sap.ui.core" xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
+<View xmlns:mvc="sap.ui.core.mvc" xmlns:grid="sap.ui.layout.cssgrid" xmlns:form="sap.ui.layout.form"
+	xmlns:customContainers="com.tic-tac-toe.custom.ui.containers" xmlns:html="http://www.w3.org/1999/xhtml"
+	xmlns:core="sap.ui.core" xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
 	<Shell id="shell">
 		<App id="app">
 			<pages>
@@ -9,22 +11,20 @@
 								<Button xmlns="sap.m" text="New Game" id="new" press="onPress" />
 							</contentLeft>
 							<contentMiddle>
-								<Slider xmlns="sap.m" value="{board>/boardConfig/wValue}" id="slider1" liveChange="onSliderEvent" max="10" min="3" />
+								<Slider xmlns="sap.m" value="{board>/boardConfig/wValue}" id="slider1"
+									liveChange="onSliderEvent" max="10" min="3" />
 							</contentMiddle>
 							<contentRight>
-								<Slider xmlns="sap.m" value="{board>/boardConfig/hValue}" id="slider2" max="10" min="3" />
+								<Slider xmlns="sap.m" value="{board>/boardConfig/hValue}" id="slider2" max="10"
+									min="3" />
 							</contentRight>
 						</Bar>
-						<grid:CSSGrid id="board" gridTemplateColumns="repeat({board>/boardConfig/wValue}, 1fr)" gridTemplateRows="repeat({board>/boardConfig/hValue}, 150px)" gridGap="0.5rem">
-							<grid:items>
-								<customContainers:customControl id="field1" press="onPress" icon="{path: 'Status'}">
+						<html:div class="htmlBoard">
+							<grid:CSSGrid id="board" gridTemplateColumns="repeat({board>/boardConfig/wValue}, 1fr)"
+								gridTemplateRows="repeat({board>/boardConfig/hValue}, 150px)" gridGap="0.5rem">
 
-								</customContainers:customControl>
-								<customContainers:customControl id="field2" press="onPress" icon="sap-icon://decline">
-
-								</customContainers:customControl>
-							</grid:items>
-						</grid:CSSGrid>
+							</grid:CSSGrid>
+						</html:div>
 					</content>
 				</Page>
 			</pages>
