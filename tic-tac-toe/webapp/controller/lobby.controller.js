@@ -8,8 +8,15 @@ sap.ui.define(
   function(MessageBox, MessageToast, Controller, JSONModel) {
     'use strict';
 
+    var WS_PORT = 8082;
+    var RECONNECT_DELAY_MS = 2000;
+    var MAX_RECONNECT_ATTEMPTS = 5;
+
     return Controller.extend('com.tic-tac-toe.controller.lobby', {
       ws: null,
+      _reconnectAttempts: 0,
+      _reconnectTimer: null,
+      _pendingAIDifficulty: null,
 
       onInit: function() {
         var oModel = new JSONModel({
@@ -24,25 +31,19 @@ sap.ui.define(
         oRouter.getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
       },
 
+      _getWsUrl: function() {
+        return 'ws://' + window.location.hostname + ':' + WS_PORT;
+      },
+
       _onLobbyEntered: function() {
-        // When returning from game, restore WebSocket message handler
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-          var that = this;
-          this.ws.onmessage = function(event) {
-            var msg = JSON.parse(event.data);
-            that._handleMessage(msg);
-          };
-          // Request fresh player list
           this.ws.send(JSON.stringify({ type: 'refreshList' }));
         }
       },
 
-      onConnect: function() {
-        var oModel = this.getView().getModel('lobby');
-        var name = oModel.getProperty('/playerName').trim();
-
-        if (!name) {
-          MessageToast.show('Please enter your name');
+      _setupWebSocket: function(name, onReady) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          if (onReady) { onReady(); }
           return;
         }
 
@@ -51,22 +52,28 @@ sap.ui.define(
         }
 
         var that = this;
-        var wsUrl = 'ws://' + window.location.hostname + ':8082';
-        this.ws = new WebSocket(wsUrl);
+        var oModel = this.getView().getModel('lobby');
+
+        this.ws = new WebSocket(this._getWsUrl());
 
         this.ws.onopen = function() {
+          that._reconnectAttempts = 0;
           that.ws.send(JSON.stringify({ type: 'join', name: name }));
         };
 
         this.ws.onmessage = function(event) {
-          var msg = JSON.parse(event.data);
-          that._handleMessage(msg);
+          try {
+            var msg = JSON.parse(event.data);
+            that._dispatch(msg, onReady);
+          } catch (e) {
+            // Ignore malformed messages
+          }
         };
 
         this.ws.onclose = function() {
           oModel.setProperty('/connected', false);
           oModel.setProperty('/players', []);
-          MessageToast.show('Disconnected from server');
+          that._attemptReconnect(name);
         };
 
         this.ws.onerror = function() {
@@ -74,7 +81,34 @@ sap.ui.define(
         };
       },
 
-      _handleMessage: function(msg) {
+      _attemptReconnect: function(name) {
+        var that = this;
+
+        if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          MessageToast.show('Connection lost. Click Connect to retry.');
+          this._enableConnectUI();
+          this._reconnectAttempts = 0;
+          return;
+        }
+
+        this._reconnectAttempts++;
+        var delay = RECONNECT_DELAY_MS * this._reconnectAttempts;
+
+        this._reconnectTimer = setTimeout(function() {
+          if (!that.ws || that.ws.readyState !== WebSocket.OPEN) {
+            that._setupWebSocket(name);
+          }
+        }, delay);
+      },
+
+      _enableConnectUI: function() {
+        var connectBtn = this.getView().byId('connectBtn');
+        var nameInput = this.getView().byId('playerNameInput');
+        if (connectBtn) { connectBtn.setEnabled(true); }
+        if (nameInput) { nameInput.setEnabled(true); }
+      },
+
+      _dispatch: function(msg, onReadyCallback) {
         var oModel = this.getView().getModel('lobby');
 
         switch (msg.type) {
@@ -84,6 +118,7 @@ sap.ui.define(
             this.getView().byId('connectBtn').setEnabled(false);
             this.getView().byId('playerNameInput').setEnabled(false);
             MessageToast.show('Connected as ' + msg.name);
+            if (onReadyCallback) { onReadyCallback(); }
             break;
 
           case 'playerList':
@@ -101,7 +136,30 @@ sap.ui.define(
           case 'gameStart':
             this._startGame(msg);
             break;
+
+          case 'error':
+            MessageToast.show(msg.message || 'Server error');
+            break;
+
+          case 'gameOver':
+            // Handle timeout while in lobby
+            if (msg.result === 'timeout') {
+              MessageToast.show(msg.message || 'Game timed out');
+            }
+            break;
         }
+      },
+
+      onConnect: function() {
+        var oModel = this.getView().getModel('lobby');
+        var name = oModel.getProperty('/playerName').trim();
+
+        if (!name) {
+          MessageToast.show('Please enter your name');
+          return;
+        }
+
+        this._setupWebSocket(name);
       },
 
       _handleInvite: function(msg) {
@@ -109,23 +167,17 @@ sap.ui.define(
         MessageBox.confirm(msg.fromName + ' wants to play. Accept?', {
           title: 'Game Invite',
           onClose: function(action) {
+            if (!that.ws || that.ws.readyState !== WebSocket.OPEN) { return; }
             if (action === MessageBox.Action.OK) {
-              that.ws.send(JSON.stringify({
-                type: 'acceptInvite',
-                fromId: msg.fromId,
-              }));
+              that.ws.send(JSON.stringify({ type: 'acceptInvite', fromId: msg.fromId }));
             } else {
-              that.ws.send(JSON.stringify({
-                type: 'declineInvite',
-                fromId: msg.fromId,
-              }));
+              that.ws.send(JSON.stringify({ type: 'declineInvite', fromId: msg.fromId }));
             }
           },
         });
       },
 
       _startGame: function(msg) {
-        // Store game info on Component so the game controller can access it
         var oComponent = this.getOwnerComponent();
         oComponent._gameData = {
           ws: this.ws,
@@ -135,27 +187,25 @@ sap.ui.define(
           cols: msg.cols,
           rows: msg.rows,
         };
-
-        // Navigate to game view
         oComponent.getRouter().navTo('game');
       },
 
       onPlayComputer: function() {
+        var oModel = this.getView().getModel('lobby');
         var difficulty = this.getView().byId('difficultySelect').getSelectedKey();
-        var oComponent = this.getOwnerComponent();
 
-        oComponent._gameData = {
-          ws: null,
-          gameId: 'local',
-          mySymbol: 'O',
-          opponentName: 'Computer (' + difficulty + ')',
-          cols: 3,
-          rows: 3,
-          isAI: true,
-          difficulty: difficulty,
+        var that = this;
+        var sendPlayAI = function() {
+          that.ws.send(JSON.stringify({ type: 'playAI', difficulty: difficulty }));
         };
 
-        oComponent.getRouter().navTo('game');
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+          var name = oModel.getProperty('/playerName').trim() || 'Player';
+          oModel.setProperty('/playerName', name);
+          this._setupWebSocket(name, sendPlayAI);
+        } else {
+          sendPlayAI();
+        }
       },
 
       onInvite: function(oEvent) {
@@ -164,19 +214,17 @@ sap.ui.define(
         var oModel = this.getView().getModel('lobby');
         var myId = oModel.getProperty('/myId');
 
-        if (targetId === myId) {
-          return;
-        }
+        if (targetId === myId) { return; }
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) { return; }
 
-        this.ws.send(JSON.stringify({
-          type: 'invite',
-          targetId: targetId,
-        }));
-
+        this.ws.send(JSON.stringify({ type: 'invite', targetId: targetId }));
         MessageToast.show('Invite sent!');
       },
 
       onExit: function() {
+        if (this._reconnectTimer) {
+          clearTimeout(this._reconnectTimer);
+        }
         if (this.ws) {
           this.ws.close();
         }

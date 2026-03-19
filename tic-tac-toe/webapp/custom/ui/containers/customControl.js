@@ -2,20 +2,19 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
   Control,
   Icon
 ) {
+  'use strict';
+
+  var ICON_X = 'sap-icon://decline';
+  var ICON_O = 'sap-icon://circle-task';
+  var ICON_SIZE = '4em';
+
   return Control.extend('com.tic-tac-toe.custom.ui.containers.customControl', {
     metadata: {
       properties: {
-        symbol: {
-          type: 'string',
-          defaultValue: '',
-        },
+        symbol: { type: 'string', defaultValue: '' },
       },
       aggregations: {
-        _icon: {
-          type: 'sap.ui.core.Icon',
-          multiple: false,
-          visibility: 'hidden',
-        },
+        _icon: { type: 'sap.ui.core.Icon', multiple: false, visibility: 'hidden' },
       },
       events: {
         press: {},
@@ -23,14 +22,11 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
     },
 
     init: function() {
-      this.setAggregation(
-        '_icon',
-        new Icon({
-          src: 'sap-icon://decline',
-          size: '4em',
-          visible: false,
-        })
-      );
+      this.setAggregation('_icon', new Icon({
+        src: ICON_X,
+        size: ICON_SIZE,
+        visible: false,
+      }));
     },
 
     renderer: function(oRm, oControl) {
@@ -41,8 +37,7 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
       oRm.writeStyles();
       oRm.write('>');
 
-      var symbol = oControl.getSymbol();
-      if (symbol) {
+      if (oControl.getSymbol()) {
         oRm.renderControl(oControl.getAggregation('_icon'));
       }
 
@@ -52,20 +47,13 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
     placeSymbol: function(symbol) {
       this.setProperty('symbol', symbol, true);
       var oIcon = this.getAggregation('_icon');
-      var iconSrc = symbol === 'X' ? 'sap-icon://decline' : 'sap-icon://circle-task';
-      oIcon.setSrc(iconSrc);
+      oIcon.setSrc(symbol === 'X' ? ICON_X : ICON_O);
       oIcon.setVisible(true);
       this.invalidate();
     },
 
-    onmousedown: function(oEvent) {
-      this.firePress(oEvent);
-    },
-
-    onAfterRendering: function() {
-      if (sap.ui.core.Control.prototype.onAfterRendering) {
-        sap.ui.core.Control.prototype.onAfterRendering.apply(this, arguments);
-      }
+    onmousedown: function() {
+      this.firePress();
     },
   });
 });
