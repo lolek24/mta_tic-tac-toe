@@ -35,10 +35,10 @@
 	"sap.ui5": {
 		"flexEnabled": false,
 		"rootView": {
-			"viewName": "com.tic-tac-toe.view.main",
+			"viewName": "com.tic-tac-toe.view.App",
 			"type": "XML",
 			"async": true,
-			"id": "main"
+			"id": "appView"
 		},
 		"dependencies": {
 			"minUI5Version": "1.65.6",
@@ -72,19 +72,31 @@
 				"async": true,
 				"viewPath": "com.tic-tac-toe.view",
 				"controlAggregation": "pages",
-				"controlId": "app",
+				"controlId": "rootApp",
 				"clearControlAggregation": false
 			},
-			"routes": [{
-				"name": "Routemain",
-				"pattern": "Routemain",
-				"target": ["Targetmain"]
-			}],
+			"routes": [
+				{
+					"name": "lobby",
+					"pattern": "",
+					"target": ["lobbyTarget"]
+				},
+				{
+					"name": "game",
+					"pattern": "game",
+					"target": ["gameTarget"]
+				}
+			],
 			"targets": {
-				"Targetmain": {
+				"lobbyTarget": {
 					"viewType": "XML",
 					"transition": "slide",
-					"clearControlAggregation": false,
+					"viewId": "lobby",
+					"viewName": "lobby"
+				},
+				"gameTarget": {
+					"viewType": "XML",
+					"transition": "slide",
 					"viewId": "main",
 					"viewName": "main"
 				}

@@ -1,0 +1,61 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core"
+	controllerName="com.tic-tac-toe.controller.lobby" displayBlock="true">
+	<Page id="lobbyPage" title="Tic Tac Toe - Lobby">
+		<content>
+			<FlexBox direction="Column" alignItems="Center" justifyContent="Center"
+				class="lobbyContainer">
+				<VBox width="400px" class="sapUiMediumMarginTop">
+					<Panel headerText="Join Game" class="sapUiSmallMarginBottom">
+						<VBox class="sapUiSmallMargin">
+							<Label text="Your name:" />
+							<Input id="playerNameInput" placeholder="Enter your name..."
+								value="{lobby>/playerName}" class="sapUiSmallMarginBottom" />
+							<Button text="Connect" press="onConnect" type="Emphasized"
+								width="100%" id="connectBtn" />
+						</VBox>
+					</Panel>
+					<Panel headerText="Play vs Computer" class="sapUiSmallMarginBottom">
+						<VBox class="sapUiSmallMargin">
+							<HBox justifyContent="SpaceBetween" alignItems="Center" width="100%">
+								<HBox alignItems="Center">
+									<core:Icon src="sap-icon://desktop-mobile"
+										class="sapUiSmallMarginEnd" />
+									<VBox>
+										<Text text="Computer" />
+										<ObjectStatus text="Always available" state="Success" />
+									</VBox>
+								</HBox>
+								<Select id="difficultySelect" class="sapUiSmallMarginEnd">
+									<core:Item key="easy" text="Easy" />
+									<core:Item key="medium" text="Medium" />
+									<core:Item key="hard" text="Hard" />
+								</Select>
+								<Button text="Play" press="onPlayComputer" type="Accept" />
+							</HBox>
+						</VBox>
+					</Panel>
+					<Panel headerText="Online Players" id="playersPanel" visible="{lobby>/connected}">
+						<List id="playerList" items="{lobby>/players}" noDataText="No other players online...">
+							<CustomListItem>
+								<HBox justifyContent="SpaceBetween" alignItems="Center"
+									width="100%" class="sapUiSmallMargin">
+									<HBox alignItems="Center">
+										<core:Icon src="sap-icon://person-placeholder"
+											class="sapUiSmallMarginEnd" />
+										<VBox>
+											<Text text="{lobby>name}" />
+											<ObjectStatus text="{lobby>status}"
+												state="{= ${lobby>status} === 'lobby' ? 'Success' : 'Warning'}" />
+										</VBox>
+									</HBox>
+									<Button text="Invite" press="onInvite" type="Accept"
+										visible="{= ${lobby>status} === 'lobby' &amp;&amp; ${lobby>id} !== ${lobby>/myId}}" />
+								</HBox>
+							</CustomListItem>
+						</List>
+					</Panel>
+				</VBox>
+			</FlexBox>
+		</content>
+	</Page>
+</mvc:View>

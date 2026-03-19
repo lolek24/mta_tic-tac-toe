@@ -1,0 +1,58 @@
+{
+  "name": "@sap/grunt-sapui5-bestpractice-build",
+  "version": "1.4.15",
+  "description": "Grunt tasks around Devx grunt build",
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "main": "tasks/index.js",
+  "scripts": {
+    "createtar": "node -e \"process.env.NODE_ENV != 'production' && process.exit(1)\" || npm pack",
+    "renametar": "mv ./sap-grunt-sapui5-bestpractice-build-*.tgz ./sap-grunt-sapui5-bestpractice.tgz",
+    "coverage": "nyc --check-coverage --statements 70 --lines 70 --branches 70 mocha \"./test/*Spec.js\""
+  },
+  "devDependencies": {
+    "q": "1.5.1",
+    "chai": "3.5.0",
+    "eslint": "^3.0.1",
+    "grunt-auto-install": "^0.3.1",
+    "grunt-exec": "^3.0.0",
+    "grunt-mocha-test": "^0.13.3",
+    "grunt-shell": "^2.1.0",
+    "gruntify-eslint": "^2.0.0",
+    "mocha": "^5.0.5",
+    "mocha-junit-reporter": "^1.17.0",
+    "mock-fs": "^4.4.2",
+    "rewire": "^3.0.2",
+    "unzipper": "0.10.11",
+    "whitesource": "0.3.13",
+    "sinon": "^4.4.8",
+    "nyc": "^13.1.0",
+    "graceful-fs": "4.2.2",
+    "fstream": "1.0.12",
+    "grunt-cli": "1.3.2"
+  },
+  "dependencies": {
+    "@sap/di.code-validation.core": "1.0.17",
+    "@sap/di.code-validation.js": "2.0.0",
+    "@sap/di.code-validation.json": "1.0.13",
+    "@sap/di.code-validation.xml": "1.1.28",
+    "archiver": "2.1.1",
+    "grunt": "1.3.0",
+    "grunt-contrib-clean": "1.1.0",
+    "grunt-contrib-copy": "1.0.0",
+    "grunt-contrib-cssmin": "2.2.0",
+    "grunt-contrib-uglify": "3.4.0",
+    "grunt-mkdir": "1.1.0",
+    "grunt-openui5": "0.18.1"
+  },
+  "engines": {
+    "npm": ">=5.6.0"
+  },
+  "nyc": {
+    "include": [
+      "tasks/*.js"
+    ],
+    "exclude": [
+      "tasks/index.js"
+    ]
+  }
+}

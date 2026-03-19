@@ -2,8 +2,8 @@
   "name": "tic-tac-toe",
   "description": "",
   "devDependencies": {
-    "@sap/grunt-sapui5-bestpractice-build": "1.4.1",
-    "@sap/grunt-sapui5-bestpractice-test": "2.0.1"
+    "@sap/grunt-sapui5-bestpractice-build": "^1.4.15",
+    "@sap/grunt-sapui5-bestpractice-test": "^2.0.4"
   },
   "scripts": {
     "test": "grunt unit_and_integration_tests"
