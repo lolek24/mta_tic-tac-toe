@@ -48,8 +48,3 @@ resources:
       service-plan: application
       service: xsuaa
     type: org.cloudfoundry.managed-service
-  - name: dest_mta_tic-tac-toe
-    parameters:
-      service-plan: lite
-      service: destination
-    type: org.cloudfoundry.managed-service
