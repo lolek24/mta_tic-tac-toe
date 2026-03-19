@@ -4,14 +4,26 @@
   "description": "Security profile of called application",
   "scopes": [
     {
+      "name": "$XSAPPNAME.user",
+      "description": "Tic Tac Toe application user access"
+    },
+    {
       "name": "uaa.user",
       "description": "UAA"
     }
   ],
   "role-templates": [
     {
+      "name": "TicTacToeUser",
+      "description": "Tic Tac Toe application user",
+      "scope-references": [
+        "$XSAPPNAME.user",
+        "uaa.user"
+      ]
+    },
+    {
       "name": "Token_Exchange",
-      "description": "UAA",
+      "description": "UAA token exchange",
       "scope-references": [
         "uaa.user"
       ]
