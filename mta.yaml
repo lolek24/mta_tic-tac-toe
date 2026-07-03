@@ -10,6 +10,20 @@ modules:
     parameters:
       disk-quota: 256M
       memory: 256M
+    properties:
+      # Backend WebSocket game server, reached via the "/game-server" route in
+      # xs-app.json. Replace the url with the host where server/ is deployed.
+      # forwardAuthToken passes the XSUAA JWT to the server, which validates it
+      # (server/auth.js, JWT_AUTH_ENABLED). Long timeout keeps the socket alive.
+      destinations: >
+        [
+          {
+            "name": "game-server",
+            "url": "https://REPLACE-with-your-game-server-host",
+            "forwardAuthToken": true,
+            "timeout": 1800000
+          }
+        ]
     requires:
       - name: mta_tic-tac-toe_html5_repo_runtime
       - name: uaa_mta_tic-tac-toe

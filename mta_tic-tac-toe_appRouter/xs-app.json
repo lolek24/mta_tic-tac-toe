@@ -5,6 +5,13 @@
   },
   "routes": [
     {
+      "source": "^/game-server/?(.*)$",
+      "target": "/$1",
+      "destination": "game-server",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    },
+    {
       "source": "^(.*)$",
       "target": "$1",
       "service": "html5-apps-repo-rt",

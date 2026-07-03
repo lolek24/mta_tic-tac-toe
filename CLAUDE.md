@@ -67,9 +67,24 @@ From the `tic-tac-toe/` directory (run `npm install` first):
 
 - **`mta_tic-tac-toe_appRouter`** — Node.js approuter handling authentication (XSUAA) and routing
 - **`mta_tic-tac-toe_ui_deployer`** — Deploys built UI artifacts to HTML5 Application Repository
-- **`tic-tac-toe`** — The SAPUI5 application (built with Grunt, output in `dist/`)
+- **`tic-tac-toe`** — The SAPUI5 application (built via `npm run build` → `dist/`)
 
 Note: The `server/` module is standalone and NOT part of the MTA deployment.
+
+### Backend routing via the AppRouter
+
+The deployed UI must not open `ws://…:8082` directly (mixed content on HTTPS, no
+auth). Instead the WebSocket game server is reached through the approuter:
+
+- **`xs-app.json`** route `^/game-server/?(.*)$` → `destination: game-server`
+  (`authenticationType: xsuaa`, `csrfProtection: false`). The approuter proxies
+  the WebSocket upgrade and enforces XSUAA auth.
+- **`mta.yaml`** defines the `game-server` destination on the approuter module
+  (`properties.destinations`). Set its `url` to where `server/` is hosted;
+  `forwardAuthToken: true` passes the JWT to the server, which validates it via
+  `server/auth.js` (set `JWT_AUTH_ENABLED=true` on the server in that setup).
+- **UI** (`lobby.controller.js` `_getWsUrl`) connects to `wss://<host>/game-server`
+  when deployed, and directly to `ws://localhost:8082` in local dev.
 
 ### SAPUI5 App
 

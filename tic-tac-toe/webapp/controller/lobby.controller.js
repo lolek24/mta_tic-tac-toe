@@ -32,7 +32,16 @@ sap.ui.define(
       },
 
       _getWsUrl: function() {
-        return 'ws://' + window.location.hostname + ':' + WS_PORT;
+        var loc = window.location;
+        // Local dev (ui5 serve on :8081): connect straight to the standalone
+        // game server on its own port.
+        if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
+          return 'ws://' + loc.hostname + ':' + WS_PORT;
+        }
+        // Deployed: go through the approuter "/game-server" route on the same
+        // origin, so the connection is wss (on https) and XSUAA-authenticated.
+        var proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+        return proto + '//' + loc.host + '/game-server';
       },
 
       _onLobbyEntered: function() {
