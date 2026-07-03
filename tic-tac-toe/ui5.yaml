@@ -1,0 +1,10 @@
+specVersion: "3.0"
+metadata:
+  name: com.tic-tac-toe
+type: application
+builder:
+  resources:
+    excludes:
+      # Keep test artifacts out of the deployed dist/ (they run via karma-ui5).
+      - "/test/**"
+      - "/localService/**"

@@ -20,18 +20,22 @@ Two servers must run simultaneously:
 
 2. **UI server** (from `tic-tac-toe/`):
    ```bash
-   cd tic-tac-toe && npx http-server webapp -p 8081 -c-1
+   cd tic-tac-toe && npm install && npm start
    ```
-   Open `http://localhost:8081`
+   Runs UI5 Tooling dev server (`ui5 serve`) on `http://localhost:8081`
 
 ### Build & Test
 
-From the `tic-tac-toe/` directory:
+From the `tic-tac-toe/` directory (run `npm install` first):
 
-- **Build**: `grunt` (runs clean, lint, build)
-- **Lint**: `grunt lint`
-- **Tests**: `grunt unit_and_integration_tests` (or `npm test`)
-- **MTA Build** (from root): `mbt build` (requires SAP MTA Build Tool)
+- **Build**: `npm run build` (`ui5 build --clean-dest` → `dist/`)
+- **Lint**: `npm run lint` (`ui5lint`)
+- **Tests**: `npm test` (`karma start` with karma-ui5, ChromeHeadless — runs unit + OPA)
+- **MTA Build** (from root): `mbt build` (requires SAP MTA Build Tool; the `tic-tac-toe` module builds via `npm ci && npm run build`)
+
+> Build/test toolchain: **UI5 Tooling** (`@ui5/cli`) + **karma-ui5**, replacing the
+> deprecated `@sap/grunt-sapui5-bestpractice-*` grunt tasks. UI5 runtime is loaded
+> from the CDN (`sapui5.hana.ondemand.com`) at both runtime and test time.
 
 ## Architecture
 
