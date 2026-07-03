@@ -30,13 +30,26 @@ npm install
 npm start
 # → ws://localhost:8082
 
-# 2. UI server (serves SAPUI5 app)
+# 2. UI server (serves SAPUI5 app via UI5 Tooling)
 cd tic-tac-toe
-npx http-server webapp -p 8081 -c-1 -o
+npm install
+npm start
 # → http://localhost:8081
 ```
 
 Open **http://localhost:8081** in your browser. To test multiplayer, open a second browser window.
+
+### Build & Test
+
+From `tic-tac-toe/` (run `npm install` first):
+
+```bash
+npm run build   # ui5 build → dist/
+npm test        # karma + karma-ui5 (unit + OPA, ChromeHeadless)
+npm run lint    # ui5lint
+```
+
+The build/test toolchain uses **UI5 Tooling** (`@ui5/cli`) with **karma-ui5**; the UI5 runtime is loaded from the CDN at both runtime and test time.
 
 ### How to Play
 
@@ -165,7 +178,7 @@ graph LR
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | SAPUI5 1.65.6+, XML Views, CSSGrid |
+| Frontend | SAPUI5 1.136+, XML Views, CSSGrid |
 | Backend | Node.js, WebSocket (ws) |
 | AI | Monte Carlo Tree Search (MCTS) |
 | Auth | SAP XSUAA |
