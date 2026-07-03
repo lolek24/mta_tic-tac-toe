@@ -26,6 +26,9 @@ sap.ui.define(
         });
         this.getView().setModel(oModel, 'lobby');
 
+        // Stable handler reference so it can be add/removeEventListener'd.
+        this._onWsMessage = this._handleWsMessage.bind(this);
+
         this.getOwnerComponent().getRouter()
           .getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
       },
@@ -45,6 +48,10 @@ sap.ui.define(
 
       _onLobbyEntered: function() {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          // Re-attach the lobby listener — it is detached in _startGame while a
+          // game is in progress. addEventListener is idempotent for the same
+          // reference, so this is safe on the initial entry too.
+          this.ws.addEventListener('message', this._onWsMessage);
           this.ws.send(JSON.stringify({ type: 'refreshList' }));
         }
       },
@@ -60,6 +67,7 @@ sap.ui.define(
         }
 
         const oModel = this.getView().getModel('lobby');
+        this._onReadyOnce = onReady || null;
 
         this.ws = new WebSocket(this._getWsUrl());
 
@@ -68,13 +76,9 @@ sap.ui.define(
           this.ws.send(JSON.stringify({ type: 'join', name: name }));
         };
 
-        this.ws.onmessage = (event) => {
-          try {
-            this._dispatch(JSON.parse(event.data), onReady);
-          } catch (e) {
-            // Ignore malformed messages
-          }
-        };
+        // addEventListener (not .onmessage) so the game controller can attach
+        // its own handler without clobbering the lobby's, and vice versa.
+        this.ws.addEventListener('message', this._onWsMessage);
 
         this.ws.onclose = () => {
           oModel.setProperty('/connected', false);
@@ -112,7 +116,15 @@ sap.ui.define(
         if (nameInput) { nameInput.setEnabled(true); }
       },
 
-      _dispatch: function(msg, onReadyCallback) {
+      _handleWsMessage: function(event) {
+        try {
+          this._dispatch(JSON.parse(event.data));
+        } catch (e) {
+          // Ignore malformed messages
+        }
+      },
+
+      _dispatch: function(msg) {
         const oModel = this.getView().getModel('lobby');
 
         switch (msg.type) {
@@ -122,7 +134,12 @@ sap.ui.define(
             this.getView().byId('connectBtn').setEnabled(false);
             this.getView().byId('playerNameInput').setEnabled(false);
             MessageToast.show(`Connected as ${msg.name}`);
-            if (onReadyCallback) { onReadyCallback(); }
+            // Fire the one-shot onReady callback (e.g. auto "playAI" after join).
+            if (this._onReadyOnce) {
+              const cb = this._onReadyOnce;
+              this._onReadyOnce = null;
+              cb();
+            }
             break;
 
           case 'playerList':
@@ -178,6 +195,9 @@ sap.ui.define(
       },
 
       _startGame: function(msg) {
+        // Hand the socket to the game controller: detach the lobby listener so
+        // only the game view handles messages while playing.
+        this.ws.removeEventListener('message', this._onWsMessage);
         const oComponent = this.getOwnerComponent();
         oComponent._gameData = {
           ws: this.ws,

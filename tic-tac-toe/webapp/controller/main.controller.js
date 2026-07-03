@@ -57,9 +57,11 @@ sap.ui.define(
 
         this._buildBoard(gameData.cols, gameData.rows);
 
-        // Attach message handler
+        // Attach the game's message handler alongside (not over) the lobby's.
+        // The lobby detaches its own listener in _startGame, so exactly one is
+        // active at a time.
         if (this._ws) {
-          this._ws.onmessage = this._boundDispatch;
+          this._ws.addEventListener('message', this._boundDispatch);
         }
       },
 
@@ -165,9 +167,20 @@ sap.ui.define(
       },
 
       _goBackToLobby: function() {
+        // Release the socket: detach the game listener so the lobby (which
+        // re-attaches its own on entry) becomes the sole message handler again.
+        if (this._ws) {
+          this._ws.removeEventListener('message', this._boundDispatch);
+        }
         const oComponent = this.getOwnerComponent();
         oComponent._gameData = null;
         oComponent.getRouter().navTo('lobby');
+      },
+
+      onExit: function() {
+        if (this._ws) {
+          this._ws.removeEventListener('message', this._boundDispatch);
+        }
       },
 
       onLeaveGame: function() {
