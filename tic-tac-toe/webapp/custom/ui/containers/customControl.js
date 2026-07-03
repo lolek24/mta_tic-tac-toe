@@ -29,19 +29,19 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
       }));
     },
 
-    renderer: function(oRm, oControl) {
-      oRm.write('<div');
-      oRm.writeControlData(oControl);
-      oRm.addClass('tttCell');
-      oRm.writeClasses();
-      oRm.writeStyles();
-      oRm.write('>');
+    renderer: {
+      apiVersion: 2,
+      render: function(oRm, oControl) {
+        oRm.openStart('div', oControl);
+        oRm.class('tttCell');
+        oRm.openEnd();
 
-      if (oControl.getSymbol()) {
-        oRm.renderControl(oControl.getAggregation('_icon'));
+        if (oControl.getSymbol()) {
+          oRm.renderControl(oControl.getAggregation('_icon'));
+        }
+
+        oRm.close('div');
       }
-
-      oRm.write('</div>');
     },
 
     placeSymbol: function(symbol) {

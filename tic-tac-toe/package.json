@@ -7,7 +7,9 @@
     "@ui5/linter": "^1.23.1",
     "karma": "^6.4.4",
     "karma-chrome-launcher": "^3.2.0",
-    "karma-ui5": "^4.1.0"
+    "karma-qunit": "^4.2.1",
+    "karma-ui5": "^4.1.0",
+    "qunit": "^2.26.0"
   },
   "scripts": {
     "build": "ui5 build --clean-dest",
