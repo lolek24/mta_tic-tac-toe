@@ -6,7 +6,7 @@ sap.ui.define([
 	return Opa5.extend("com.tic-tac-toe.test.integration.arrangements.Startup", {
 
 		iStartMyApp: function (oOptionsParameter) {
-			var oOptions = oOptionsParameter || {};
+			const oOptions = oOptionsParameter || {};
 
 			// start the app with a minimal delay to make tests fast but still async to discover basic timing issues
 			oOptions.delay = oOptions.delay || 50;

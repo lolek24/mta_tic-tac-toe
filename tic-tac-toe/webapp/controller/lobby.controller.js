@@ -8,18 +8,17 @@ sap.ui.define(
   function(MessageBox, MessageToast, Controller, JSONModel) {
     'use strict';
 
-    var WS_PORT = 8082;
-    var RECONNECT_DELAY_MS = 2000;
-    var MAX_RECONNECT_ATTEMPTS = 5;
+    const WS_PORT = 8082;
+    const RECONNECT_DELAY_MS = 2000;
+    const MAX_RECONNECT_ATTEMPTS = 5;
 
     return Controller.extend('com.tic-tac-toe.controller.lobby', {
       ws: null,
       _reconnectAttempts: 0,
       _reconnectTimer: null,
-      _pendingAIDifficulty: null,
 
       onInit: function() {
-        var oModel = new JSONModel({
+        const oModel = new JSONModel({
           playerName: '',
           connected: false,
           myId: '',
@@ -27,21 +26,21 @@ sap.ui.define(
         });
         this.getView().setModel(oModel, 'lobby');
 
-        var oRouter = this.getOwnerComponent().getRouter();
-        oRouter.getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
+        this.getOwnerComponent().getRouter()
+          .getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
       },
 
       _getWsUrl: function() {
-        var loc = window.location;
+        const loc = window.location;
         // Local dev (ui5 serve on :8081): connect straight to the standalone
         // game server on its own port.
         if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
-          return 'ws://' + loc.hostname + ':' + WS_PORT;
+          return `ws://${loc.hostname}:${WS_PORT}`;
         }
         // Deployed: go through the approuter "/game-server" route on the same
         // origin, so the connection is wss (on https) and XSUAA-authenticated.
-        var proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-        return proto + '//' + loc.host + '/game-server';
+        const proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
+        return `${proto}//${loc.host}/game-server`;
       },
 
       _onLobbyEntered: function() {
@@ -60,39 +59,35 @@ sap.ui.define(
           this.ws.close();
         }
 
-        var that = this;
-        var oModel = this.getView().getModel('lobby');
+        const oModel = this.getView().getModel('lobby');
 
         this.ws = new WebSocket(this._getWsUrl());
 
-        this.ws.onopen = function() {
-          that._reconnectAttempts = 0;
-          that.ws.send(JSON.stringify({ type: 'join', name: name }));
+        this.ws.onopen = () => {
+          this._reconnectAttempts = 0;
+          this.ws.send(JSON.stringify({ type: 'join', name: name }));
         };
 
-        this.ws.onmessage = function(event) {
+        this.ws.onmessage = (event) => {
           try {
-            var msg = JSON.parse(event.data);
-            that._dispatch(msg, onReady);
+            this._dispatch(JSON.parse(event.data), onReady);
           } catch (e) {
             // Ignore malformed messages
           }
         };
 
-        this.ws.onclose = function() {
+        this.ws.onclose = () => {
           oModel.setProperty('/connected', false);
           oModel.setProperty('/players', []);
-          that._attemptReconnect(name);
+          this._attemptReconnect(name);
         };
 
-        this.ws.onerror = function() {
+        this.ws.onerror = () => {
           MessageToast.show('Cannot connect to server');
         };
       },
 
       _attemptReconnect: function(name) {
-        var that = this;
-
         if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
           MessageToast.show('Connection lost. Click Connect to retry.');
           this._enableConnectUI();
@@ -101,24 +96,24 @@ sap.ui.define(
         }
 
         this._reconnectAttempts++;
-        var delay = RECONNECT_DELAY_MS * this._reconnectAttempts;
+        const delay = RECONNECT_DELAY_MS * this._reconnectAttempts;
 
-        this._reconnectTimer = setTimeout(function() {
-          if (!that.ws || that.ws.readyState !== WebSocket.OPEN) {
-            that._setupWebSocket(name);
+        this._reconnectTimer = setTimeout(() => {
+          if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            this._setupWebSocket(name);
           }
         }, delay);
       },
 
       _enableConnectUI: function() {
-        var connectBtn = this.getView().byId('connectBtn');
-        var nameInput = this.getView().byId('playerNameInput');
+        const connectBtn = this.getView().byId('connectBtn');
+        const nameInput = this.getView().byId('playerNameInput');
         if (connectBtn) { connectBtn.setEnabled(true); }
         if (nameInput) { nameInput.setEnabled(true); }
       },
 
       _dispatch: function(msg, onReadyCallback) {
-        var oModel = this.getView().getModel('lobby');
+        const oModel = this.getView().getModel('lobby');
 
         switch (msg.type) {
           case 'joined':
@@ -126,7 +121,7 @@ sap.ui.define(
             oModel.setProperty('/myId', msg.id);
             this.getView().byId('connectBtn').setEnabled(false);
             this.getView().byId('playerNameInput').setEnabled(false);
-            MessageToast.show('Connected as ' + msg.name);
+            MessageToast.show(`Connected as ${msg.name}`);
             if (onReadyCallback) { onReadyCallback(); }
             break;
 
@@ -139,7 +134,7 @@ sap.ui.define(
             break;
 
           case 'inviteDeclined':
-            MessageToast.show(msg.byName + ' declined your invite');
+            MessageToast.show(`${msg.byName} declined your invite`);
             break;
 
           case 'gameStart':
@@ -160,8 +155,8 @@ sap.ui.define(
       },
 
       onConnect: function() {
-        var oModel = this.getView().getModel('lobby');
-        var name = oModel.getProperty('/playerName').trim();
+        const oModel = this.getView().getModel('lobby');
+        const name = oModel.getProperty('/playerName').trim();
 
         if (!name) {
           MessageToast.show('Please enter your name');
@@ -172,22 +167,18 @@ sap.ui.define(
       },
 
       _handleInvite: function(msg) {
-        var that = this;
-        MessageBox.confirm(msg.fromName + ' wants to play. Accept?', {
+        MessageBox.confirm(`${msg.fromName} wants to play. Accept?`, {
           title: 'Game Invite',
-          onClose: function(action) {
-            if (!that.ws || that.ws.readyState !== WebSocket.OPEN) { return; }
-            if (action === MessageBox.Action.OK) {
-              that.ws.send(JSON.stringify({ type: 'acceptInvite', fromId: msg.fromId }));
-            } else {
-              that.ws.send(JSON.stringify({ type: 'declineInvite', fromId: msg.fromId }));
-            }
+          onClose: (action) => {
+            if (!this.ws || this.ws.readyState !== WebSocket.OPEN) { return; }
+            const type = action === MessageBox.Action.OK ? 'acceptInvite' : 'declineInvite';
+            this.ws.send(JSON.stringify({ type: type, fromId: msg.fromId }));
           },
         });
       },
 
       _startGame: function(msg) {
-        var oComponent = this.getOwnerComponent();
+        const oComponent = this.getOwnerComponent();
         oComponent._gameData = {
           ws: this.ws,
           gameId: msg.gameId,
@@ -200,16 +191,15 @@ sap.ui.define(
       },
 
       onPlayComputer: function() {
-        var oModel = this.getView().getModel('lobby');
-        var difficulty = this.getView().byId('difficultySelect').getSelectedKey();
+        const oModel = this.getView().getModel('lobby');
+        const difficulty = this.getView().byId('difficultySelect').getSelectedKey();
 
-        var that = this;
-        var sendPlayAI = function() {
-          that.ws.send(JSON.stringify({ type: 'playAI', difficulty: difficulty }));
+        const sendPlayAI = () => {
+          this.ws.send(JSON.stringify({ type: 'playAI', difficulty: difficulty }));
         };
 
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-          var name = oModel.getProperty('/playerName').trim() || 'Player';
+          const name = oModel.getProperty('/playerName').trim() || 'Player';
           oModel.setProperty('/playerName', name);
           this._setupWebSocket(name, sendPlayAI);
         } else {
@@ -218,10 +208,9 @@ sap.ui.define(
       },
 
       onInvite: function(oEvent) {
-        var oContext = oEvent.getSource().getBindingContext('lobby');
-        var targetId = oContext.getProperty('id');
-        var oModel = this.getView().getModel('lobby');
-        var myId = oModel.getProperty('/myId');
+        const oContext = oEvent.getSource().getBindingContext('lobby');
+        const targetId = oContext.getProperty('id');
+        const myId = this.getView().getModel('lobby').getProperty('/myId');
 
         if (targetId === myId) { return; }
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) { return; }

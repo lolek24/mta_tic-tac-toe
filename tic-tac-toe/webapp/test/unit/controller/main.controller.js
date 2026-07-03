@@ -8,11 +8,11 @@ sap.ui.define([
 	QUnit.module("main Controller");
 
 	QUnit.test("onInit wires the 'game' route pattern-matched handler", function (assert) {
-		var oController = new Controller();
+		const oController = new Controller();
 
 		// onInit depends on the owner component + view, so provide minimal stubs.
-		var bAttached = false;
-		var sRoute = "";
+		let bAttached = false;
+		let sRoute = "";
 		oController.getOwnerComponent = function () {
 			return {
 				getRouter: function () {

@@ -9,7 +9,7 @@ sap.ui.define(
   function(MessageToast, MessageBox, Controller, JSONModel, customControl) {
     'use strict';
 
-    var CELL_SIZE_PX = 120;
+    const CELL_SIZE_PX = 120;
 
     return Controller.extend('com.tic-tac-toe.controller.main', {
       _board: [],
@@ -20,7 +20,7 @@ sap.ui.define(
       _boundDispatch: null,
 
       onInit: function() {
-        var oGameModel = new JSONModel({
+        const oGameModel = new JSONModel({
           mySymbol: '',
           opponentSymbol: '',
           myName: '',
@@ -31,13 +31,13 @@ sap.ui.define(
 
         this._boundDispatch = this._dispatch.bind(this);
 
-        var oRouter = this.getOwnerComponent().getRouter();
-        oRouter.getRoute('game').attachPatternMatched(this._onGameEntered, this);
+        this.getOwnerComponent().getRouter()
+          .getRoute('game').attachPatternMatched(this._onGameEntered, this);
       },
 
       _onGameEntered: function() {
-        var oComponent = this.getOwnerComponent();
-        var gameData = oComponent._gameData;
+        const oComponent = this.getOwnerComponent();
+        const gameData = oComponent._gameData;
 
         if (!gameData) {
           oComponent.getRouter().navTo('lobby');
@@ -48,7 +48,7 @@ sap.ui.define(
         this._gameId = gameData.gameId;
         this._mySymbol = gameData.mySymbol;
 
-        var oModel = this.getView().getModel('game');
+        const oModel = this.getView().getModel('game');
         oModel.setProperty('/mySymbol', gameData.mySymbol);
         oModel.setProperty('/opponentSymbol', gameData.mySymbol === 'O' ? 'X' : 'O');
         oModel.setProperty('/opponentName', gameData.opponentName);
@@ -64,10 +64,10 @@ sap.ui.define(
       },
 
       _dispatch: function(event) {
-        var msg;
+        let msg;
         try { msg = JSON.parse(event.data); } catch (e) { return; }
 
-        var oModel = this.getView().getModel('game');
+        const oModel = this.getView().getModel('game');
 
         switch (msg.type) {
           case 'moveMade':
@@ -82,13 +82,12 @@ sap.ui.define(
               if (msg.symbol === this._mySymbol) {
                 MessageBox.success('You win!', { title: 'Game Over' });
               } else {
-                MessageBox.error(msg.winner + ' wins!', { title: 'Game Over' });
+                MessageBox.error(`${msg.winner} wins!`, { title: 'Game Over' });
               }
             } else if (msg.result === 'timeout') {
-              var that = this;
               MessageBox.warning(msg.message || 'Game timed out', {
                 title: 'Timeout',
-                onClose: function() { that._goBackToLobby(); },
+                onClose: () => this._goBackToLobby(),
               });
             } else {
               MessageBox.information("It's a draw!", { title: 'Game Over' });
@@ -98,10 +97,9 @@ sap.ui.define(
           case 'opponentLeft':
             this._gameover = true;
             oModel.setProperty('/myTurn', false);
-            var self = this;
             MessageBox.warning('Opponent left the game', {
               title: 'Game Over',
-              onClose: function() { self._goBackToLobby(); },
+              onClose: () => this._goBackToLobby(),
             });
             break;
 
@@ -116,39 +114,37 @@ sap.ui.define(
       },
 
       _buildBoard: function(cols, rows) {
-        var total = cols * rows;
+        const total = cols * rows;
 
         this._board = [];
         this._gameover = false;
 
-        for (var i = 0; i < total; i++) {
+        for (let i = 0; i < total; i++) {
           this._board.push('');
         }
 
-        var oBoard = this.getView().byId('board');
-        oBoard.setGridTemplateColumns('repeat(' + cols + ', ' + CELL_SIZE_PX + 'px)');
-        oBoard.setGridTemplateRows('repeat(' + rows + ', ' + CELL_SIZE_PX + 'px)');
+        const oBoard = this.getView().byId('board');
+        oBoard.setGridTemplateColumns(`repeat(${cols}, ${CELL_SIZE_PX}px)`);
+        oBoard.setGridTemplateRows(`repeat(${rows}, ${CELL_SIZE_PX}px)`);
         oBoard.removeAllItems();
 
-        for (var j = 0; j < total; j++) {
-          var item = new customControl({
+        for (let j = 0; j < total; j++) {
+          oBoard.addItem(new customControl({
             press: this._onCellPress.bind(this, j),
-          });
-          oBoard.addItem(item);
+          }));
         }
       },
 
       _placeSymbol: function(index, symbol) {
         this._board[index] = symbol;
-        var oBoard = this.getView().byId('board');
-        var cell = oBoard.getItems()[index];
-        cell.placeSymbol(symbol);
+        const oBoard = this.getView().byId('board');
+        oBoard.getItems()[index].placeSymbol(symbol);
       },
 
       _onCellPress: function(index) {
         if (this._gameover) { return; }
 
-        var oModel = this.getView().getModel('game');
+        const oModel = this.getView().getModel('game');
         if (!oModel.getProperty('/myTurn')) {
           MessageToast.show("It's not your turn");
           return;
@@ -169,24 +165,23 @@ sap.ui.define(
       },
 
       _goBackToLobby: function() {
-        var oComponent = this.getOwnerComponent();
+        const oComponent = this.getOwnerComponent();
         oComponent._gameData = null;
         oComponent.getRouter().navTo('lobby');
       },
 
       onLeaveGame: function() {
-        var that = this;
         MessageBox.confirm('Are you sure you want to leave?', {
           title: 'Leave Game',
-          onClose: function(action) {
+          onClose: (action) => {
             if (action === MessageBox.Action.OK) {
-              if (that._ws && that._ws.readyState === WebSocket.OPEN) {
-                that._ws.send(JSON.stringify({
+              if (this._ws && this._ws.readyState === WebSocket.OPEN) {
+                this._ws.send(JSON.stringify({
                   type: 'leaveGame',
-                  gameId: that._gameId,
+                  gameId: this._gameId,
                 }));
               }
-              that._goBackToLobby();
+              this._goBackToLobby();
             }
           },
         });

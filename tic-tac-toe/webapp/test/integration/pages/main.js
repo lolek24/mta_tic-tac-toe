@@ -4,7 +4,7 @@ sap.ui.define([
 	"use strict";
 	// The app opens on the lobby route (empty pattern), so the initial page is
 	// the lobby view — not "main", which is only shown on the /game route.
-	var sViewName = "lobby";
+	const sViewName = "lobby";
 	Opa5.createPageObjects({
 		onTheAppPage: {
 
