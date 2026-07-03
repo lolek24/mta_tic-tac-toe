@@ -28,7 +28,10 @@ modules:
     type: html5
     path: tic-tac-toe
     build-parameters:
-      builder: grunt
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
       supported-platforms: []
       build-result: dist
 resources:
