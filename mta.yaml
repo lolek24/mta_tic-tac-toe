@@ -10,23 +10,10 @@ modules:
     parameters:
       disk-quota: 256M
       memory: 256M
-    properties:
-      # Backend WebSocket game server, reached via the "/game-server" route in
-      # xs-app.json. Replace the url with the host where server/ is deployed.
-      # forwardAuthToken passes the XSUAA JWT to the server, which validates it
-      # (server/auth.js, JWT_AUTH_ENABLED). Long timeout keeps the socket alive.
-      destinations: >
-        [
-          {
-            "name": "game-server",
-            "url": "https://REPLACE-with-your-game-server-host",
-            "forwardAuthToken": true,
-            "timeout": 1800000
-          }
-        ]
     requires:
       - name: mta_tic-tac-toe_html5_repo_runtime
       - name: uaa_mta_tic-tac-toe
+      - name: mta_tic-tac-toe_destination
   - name: mta_tic-tac-toe_ui_deployer
     type: com.sap.html5.application-content
     path: mta_tic-tac-toe_ui_deployer
@@ -65,3 +52,24 @@ resources:
       service-plan: application
       service: xsuaa
     type: org.cloudfoundry.managed-service
+  # Managed destination service. Provisions the "game-server" destination on
+  # deploy (init_data). Replace URL with the host where server/ is deployed;
+  # forwardAuthToken passes the XSUAA JWT to the server (validated by auth.js).
+  - name: mta_tic-tac-toe_destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: destination
+      service-plan: lite
+      config:
+        init_data:
+          instance:
+            existing_destinations_policy: update
+            destinations:
+              - Name: game-server
+                Description: Tic Tac Toe WebSocket game server
+                Type: HTTP
+                URL: https://REPLACE-with-your-game-server-host
+                ProxyType: Internet
+                Authentication: NoAuthentication
+                forwardAuthToken: true
+                HTML5.DynamicDestination: true

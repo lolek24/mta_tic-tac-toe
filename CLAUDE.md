@@ -79,10 +79,11 @@ auth). Instead the WebSocket game server is reached through the approuter:
 - **`xs-app.json`** route `^/game-server/?(.*)$` → `destination: game-server`
   (`authenticationType: xsuaa`, `csrfProtection: false`). The approuter proxies
   the WebSocket upgrade and enforces XSUAA auth.
-- **`mta.yaml`** defines the `game-server` destination on the approuter module
-  (`properties.destinations`). Set its `url` to where `server/` is hosted;
-  `forwardAuthToken: true` passes the JWT to the server, which validates it via
-  `server/auth.js` (set `JWT_AUTH_ENABLED=true` on the server in that setup).
+- **`mta.yaml`** provisions the `game-server` destination through a managed
+  **destination service** (`mta_tic-tac-toe_destination`, bound to the approuter).
+  Its `init_data` creates the destination on deploy — set `URL` to where `server/`
+  is hosted; `forwardAuthToken: true` passes the JWT to the server, which validates
+  it via `server/auth.js` (set `JWT_AUTH_ENABLED=true` on the server in that setup).
 - **UI** (`lobby.controller.js` `_getWsUrl`) connects to `wss://<host>/game-server`
   when deployed, and directly to `ws://localhost:8082` in local dev.
 
