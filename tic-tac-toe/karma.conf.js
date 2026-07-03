@@ -9,8 +9,8 @@ module.exports = function (config) {
 			type: "application",
 			mode: "script",
 			// The app bootstraps UI5 from the CDN (see webapp/index.html), so run
-			// the tests against the same runtime instead of a self-hosted framework.
-			url: "https://sapui5.hana.ondemand.com",
+			// the tests against the same pinned runtime version.
+			url: "https://sapui5.hana.ondemand.com/1.149.1",
 			config: {
 				async: true,
 				resourceRoots: {

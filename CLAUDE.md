@@ -79,7 +79,7 @@ Note: The `server/` module is standalone and NOT part of the MTA deployment.
 - **Models**: `game` (JSONModel), `lobby` (JSONModel), `device` (JSONModel), `i18n` (ResourceModel)
 - **Custom control**: `customControl` — board cell rendering X (`sap-icon://decline`) and O (`sap-icon://circle-task`)
 - **Board**: 3x3 `sap.ui.layout.cssgrid.CSSGrid` with 120px cells
-- **Min UI5 Version**: 1.65.6
+- **Min UI5 Version**: 1.136.0 (manifest); runtime pinned to SAPUI5 **1.149.1** on the CDN (`index.html`, `karma.conf.js`)
 
 ### WebSocket Server
 
