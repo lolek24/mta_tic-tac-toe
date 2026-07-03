@@ -178,7 +178,7 @@ graph LR
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | SAPUI5 1.136+, XML Views, CSSGrid |
+| Frontend | SAPUI5 1.149.1 (pinned CDN; manifest minUI5Version 1.136), XML Views, CSSGrid |
 | Backend | Node.js, WebSocket (ws) |
 | AI | Monte Carlo Tree Search (MCTS) |
 | Auth | SAP XSUAA |
