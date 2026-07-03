@@ -4,6 +4,7 @@ var WebSocket = require('ws');
 var http = require('http');
 var crypto = require('crypto');
 var MonteCarloAI = require('./MonteCarloAI');
+var auth = require('./auth');
 
 // Constants
 var PORT = process.env.PORT || 8082;
@@ -14,13 +15,93 @@ var AI_MOVE_DELAY_MS = 300;
 var GAME_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes inactivity
 var VALID_DIFFICULTIES = ['easy', 'medium', 'hard'];
 var MAX_NAME_LENGTH = 30;
+var MAX_PAYLOAD_BYTES = 4096; // reject oversized WS frames (DoS guard)
+var INVITE_TIMEOUT_MS = 60 * 1000; // invites expire after 1 minute
+var INVITE_SWEEP_MS = 60 * 1000;   // periodic prune of expired invites
+
+// Comma-separated allowlist of accepted Origins (e.g. "https://app.example.com").
+// Empty => allow any Origin (dev convenience). Set this in production.
+var ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
+  .split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+var MAX_CONNECTIONS_PER_IP = parseInt(process.env.MAX_CONNECTIONS_PER_IP, 10) || 20;
+var MSG_WINDOW_MS = 10 * 1000;   // sliding window for per-connection message rate limit
+var MSG_MAX_PER_WINDOW = 60;     // max messages allowed per window per connection
+var INVITE_COOLDOWN_MS = 2000;   // minimum gap between invites from a single player
+
+var ipConnections = {}; // ip -> active connection count (per-IP cap)
+
+// Reject connections at the handshake: Origin allowlist + per-IP cap + JWT auth.
+function verifyClient(info) {
+  if (ALLOWED_ORIGINS.length > 0 && ALLOWED_ORIGINS.indexOf(info.origin) === -1) {
+    return false;
+  }
+  var ip = info.req.socket.remoteAddress;
+  if ((ipConnections[ip] || 0) >= MAX_CONNECTIONS_PER_IP) {
+    return false;
+  }
+  // JWT verification (no-op unless JWT_AUTH_ENABLED=true). Stash the verified
+  // claims on the request so the 'connection' handler can read them — this is
+  // the same req object emitted with the connection.
+  var authResult = auth.authenticate(info.req);
+  if (!authResult.valid) {
+    console.warn('Rejected WS handshake from ' + ip + ': ' + authResult.error);
+    return false;
+  }
+  info.req.authClaims = authResult.claims;
+  return true;
+}
 
 var server = http.createServer();
-var wss = new WebSocket.Server({ server: server });
+var wss = new WebSocket.Server({
+  server: server,
+  maxPayload: MAX_PAYLOAD_BYTES,
+  verifyClient: verifyClient,
+});
+
+if (ALLOWED_ORIGINS.length === 0) {
+  console.warn('WARNING: ALLOWED_ORIGINS not set — accepting WebSocket connections from any Origin.');
+}
 
 // State
 var players = {};   // id -> { ws, name, status }
 var games = {};     // gameId -> { player1, player2, board, currentTurn, cols, rows, isAI, aiSymbol, difficulty, timeout }
+var invites = {};   // "fromId->targetId" -> expiresAt (timestamp)
+
+// --- Invite registry ---
+
+function inviteKey(fromId, targetId) {
+  return fromId + '->' + targetId;
+}
+
+function addInvite(fromId, targetId) {
+  invites[inviteKey(fromId, targetId)] = Date.now() + INVITE_TIMEOUT_MS;
+}
+
+// Returns true only if a non-expired invite existed; consumes it either way.
+function consumeInvite(fromId, targetId) {
+  var key = inviteKey(fromId, targetId);
+  var expiresAt = invites[key];
+  if (expiresAt === undefined) return false;
+  delete invites[key];
+  return expiresAt >= Date.now();
+}
+
+function clearInvitesFor(playerId) {
+  Object.keys(invites).forEach(function(key) {
+    var parts = key.split('->');
+    if (parts[0] === playerId || parts[1] === playerId) {
+      delete invites[key];
+    }
+  });
+}
+
+// Periodically prune expired invites so the registry can't grow unbounded.
+setInterval(function() {
+  var now = Date.now();
+  Object.keys(invites).forEach(function(key) {
+    if (invites[key] < now) { delete invites[key]; }
+  });
+}, INVITE_SWEEP_MS);
 
 // --- Helpers ---
 
@@ -42,9 +123,11 @@ function sendTo(playerId, data) {
 }
 
 function getPlayerList() {
-  return Object.keys(players).map(function(id) {
-    return { id: id, name: players[id].name, status: players[id].status };
-  });
+  return Object.keys(players)
+    .filter(function(id) { return players[id].status !== 'pending'; })
+    .map(function(id) {
+      return { id: id, name: players[id].name, status: players[id].status };
+    });
 }
 
 function broadcastPlayerList() {
@@ -146,6 +229,10 @@ function createGame(player1Id, player2Id) {
 
   players[player1Id].status = 'ingame';
   players[player2Id].status = 'ingame';
+
+  // Both players are now busy — drop any invites involving either of them.
+  clearInvitesFor(player1Id);
+  clearInvitesFor(player2Id);
 
   sendTo(player1Id, {
     type: 'gameStart',
@@ -279,15 +366,30 @@ function notifyBothPlayers(game, data) {
 
 // --- WebSocket connection handler ---
 
-wss.on('connection', function(ws) {
+wss.on('connection', function(ws, req) {
   var playerId = crypto.randomUUID();
+  var ip = req.socket.remoteAddress;
+  var authClaims = req.authClaims || null; // verified in verifyClient (null if auth disabled)
+  ipConnections[ip] = (ipConnections[ip] || 0) + 1;
+
+  var windowStart = 0;
+  var msgCount = 0;
 
   ws.on('message', function(raw) {
+    // Per-connection sliding-window message rate limit (DoS / flood guard).
+    var now = Date.now();
+    if (now - windowStart > MSG_WINDOW_MS) {
+      windowStart = now;
+      msgCount = 0;
+    }
+    msgCount++;
+    if (msgCount > MSG_MAX_PER_WINDOW) { return; } // silently drop excess
+
     var msg;
     try { msg = JSON.parse(raw); } catch (e) { return; }
 
-    // Require join before any other action
-    if (msg.type !== 'join' && !players[playerId]) {
+    // Require a successful join before any other action.
+    if (msg.type !== 'join' && players[playerId].status === 'pending') {
       sendTo(playerId, { type: 'error', message: 'Not connected. Send join first.' });
       return;
     }
@@ -300,6 +402,11 @@ wss.on('connection', function(ws) {
   });
 
   ws.on('close', function() {
+    if (ipConnections[ip]) {
+      ipConnections[ip]--;
+      if (ipConnections[ip] <= 0) { delete ipConnections[ip]; }
+    }
+
     // Clean up games
     Object.keys(games).forEach(function(gId) {
       var g = games[gId];
@@ -312,19 +419,27 @@ wss.on('connection', function(ws) {
       }
     });
 
+    clearInvitesFor(playerId);
     delete players[playerId];
     broadcastPlayerList();
   });
 
   // Store ws for sendTo before join
-  players[playerId] = { ws: ws, name: '', status: 'pending' };
+  players[playerId] = { ws: ws, name: '', status: 'pending', lastInviteAt: 0, claims: authClaims };
 });
 
 function handleMessage(playerId, msg) {
   switch (msg.type) {
     case 'join':
-      var name = sanitizeName(msg.name);
-      players[playerId] = { ws: players[playerId].ws, name: name, status: 'lobby' };
+      // Only a fresh, not-yet-joined connection may join. This blocks a
+      // re-join mid-game (which would desync game state) and mid-game renames.
+      if (players[playerId].status !== 'pending') break;
+      // When JWT auth is on, the verified identity wins over any client-supplied
+      // name so a player cannot spoof another user's display name.
+      var authName = auth.nameFromClaims(players[playerId].claims);
+      var name = authName ? sanitizeName(authName) : sanitizeName(msg.name);
+      players[playerId].name = name;
+      players[playerId].status = 'lobby';
       sendTo(playerId, { type: 'joined', id: playerId, name: name });
       broadcastPlayerList();
       break;
@@ -339,6 +454,11 @@ function handleMessage(playerId, msg) {
       if (typeof msg.targetId !== 'string') break;
       var target = players[msg.targetId];
       if (target && target.status === 'lobby' && msg.targetId !== playerId) {
+        // Rate-limit invites from a single player to prevent dialog flooding.
+        var nowInvite = Date.now();
+        if (nowInvite - players[playerId].lastInviteAt < INVITE_COOLDOWN_MS) break;
+        players[playerId].lastInviteAt = nowInvite;
+        addInvite(playerId, msg.targetId);
         sendTo(msg.targetId, {
           type: 'invite',
           fromId: playerId,
@@ -349,6 +469,9 @@ function handleMessage(playerId, msg) {
 
     case 'acceptInvite':
       if (typeof msg.fromId !== 'string') break;
+      // Only accept an invite that was actually sent to this player and hasn't
+      // expired — prevents forcing a game onto an unsuspecting player.
+      if (!consumeInvite(msg.fromId, playerId)) break;
       var inviter = players[msg.fromId];
       if (inviter && inviter.status === 'lobby' && players[playerId].status === 'lobby') {
         createGame(msg.fromId, playerId);
@@ -357,6 +480,8 @@ function handleMessage(playerId, msg) {
 
     case 'declineInvite':
       if (typeof msg.fromId !== 'string') break;
+      // Only a real, pending invite can be declined — blocks spoofed decline toasts.
+      if (!consumeInvite(msg.fromId, playerId)) break;
       sendTo(msg.fromId, {
         type: 'inviteDeclined',
         byName: players[playerId].name,
