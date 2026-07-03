@@ -16,7 +16,7 @@ A multiplayer Tic Tac Toe game built with SAPUI5, featuring real-time online pla
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (Node 22+ is required for the SAP AppRouter module when deploying to BTP)
 - npm
 
 ### Run Locally
@@ -207,4 +207,8 @@ mbt build
 cf deploy mta_archives/mta_tic-tac-toe_0.0.1.mtar
 ```
 
-Note: The WebSocket server (`server/`) is not part of the MTA deployment and must be hosted separately.
+Note: The WebSocket server (`server/`) is not part of the MTA deployment and must be hosted separately. When deployed, the UI reaches it through the AppRouter `/game-server` route (see [DEVELOPMENT.md](DEVELOPMENT.md) → *Backend routing via the AppRouter*).
+
+## Documentation
+
+Architecture, build/run details, and the backend routing setup are documented in [DEVELOPMENT.md](DEVELOPMENT.md).
