@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const gameRules = require('./gameRules');
+const log = require('./logger');
 
 // --- Constants ---
 const EXPLORATION_WEIGHT = 1.41; // sqrt(2)
@@ -33,10 +34,10 @@ function loadMemory() {
       const data = fs.readFileSync(MEMORY_FILE, 'utf8');
       memory = JSON.parse(data);
       const count = Object.keys(memory).length;
-      console.log(`AI memory loaded: ${count} positions`);
+      log.info(`AI memory loaded: ${count} positions`);
     }
   } catch (err) {
-    console.error('Failed to load AI memory:', err.message);
+    log.error('Failed to load AI memory', err.message);
     memory = {};
   }
 }
@@ -47,7 +48,7 @@ function saveMemory() {
     fs.writeFileSync(MEMORY_FILE, JSON.stringify(memory), 'utf8');
     memoryDirty = false;
   } catch (err) {
-    console.error('Failed to save AI memory:', err.message);
+    log.error('Failed to save AI memory', err.message);
   }
 }
 

@@ -22,6 +22,7 @@
 
 const fs = require('fs');
 const crypto = require('crypto');
+const log = require('./logger');
 
 // --- Configuration (env-driven) ---
 
@@ -47,7 +48,7 @@ function safeReadFile(path) {
   try {
     return fs.readFileSync(path, 'utf8');
   } catch (err) {
-    console.error(`JWT: failed to read key file ${path}: ${err.message}`);
+    log.error('JWT: failed to read key file', `${path}: ${err.message}`);
     return '';
   }
 }

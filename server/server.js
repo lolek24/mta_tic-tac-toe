@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const ai = require('./aiClient');
 const auth = require('./auth');
 const gameRules = require('./gameRules');
+const log = require('./logger');
 
 // Constants
 const PORT = process.env.PORT || 8082;
@@ -45,7 +46,7 @@ function verifyClient(info) {
   // the same req object emitted with the connection.
   const authResult = auth.authenticate(info.req);
   if (!authResult.valid) {
-    console.warn(`Rejected WS handshake from ${ip}: ${authResult.error}`);
+    log.warn('Rejected WS handshake', { ip, reason: authResult.error });
     return false;
   }
   info.req.authClaims = authResult.claims;
@@ -60,7 +61,7 @@ const wss = new WebSocket.Server({
 });
 
 if (ALLOWED_ORIGINS.length === 0) {
-  console.warn('WARNING: ALLOWED_ORIGINS not set — accepting WebSocket connections from any Origin.');
+  log.warn('ALLOWED_ORIGINS not set — accepting WebSocket connections from any Origin');
 }
 
 // State
@@ -237,7 +238,9 @@ function createAIGame(playerId, difficulty) {
     aiSymbol: SYMBOLS.PLAYER2,
     difficulty: validDifficulty,
     timeout: null,
-    positionHistory: [board.slice()],
+    // Real positions accumulate as moves are made; the empty board is excluded
+    // so it doesn't get recorded as noise on every AI game.
+    positionHistory: [],
   };
 
   players[playerId].status = 'ingame';
@@ -267,8 +270,8 @@ function endGame(gameId, result) {
   // Record game for AI learning (fire-and-forget; runs in the AI worker).
   if (game.isAI && game.positionHistory && result) {
     ai.recordGame(game.positionHistory, game.aiSymbol, result)
-      .then((stats) => console.log(`AI learned from game (${result}). Memory: ${stats.positions} positions, ${stats.totalVisits} total visits`))
-      .catch((err) => console.error('Failed to record game:', err.message));
+      .then((stats) => log.info(`AI learned from game (${result})`, { positions: stats.positions, totalVisits: stats.totalVisits }))
+      .catch((err) => log.error('Failed to record game', err.message));
   }
 
   if (players[game.player1]) {
@@ -313,7 +316,7 @@ async function processAIMove(gameId) {
       resetGameTimeout(gameId);
     }
   } catch (err) {
-    console.error('AI move error:', err);
+    log.error('AI move error', err.message);
     const g = games[gameId];
     if (g) { sendTo(g.player1, { type: 'error', message: 'AI error, please restart' }); }
   }
@@ -361,7 +364,7 @@ wss.on('connection', (ws, req) => {
     try {
       handleMessage(playerId, msg);
     } catch (err) {
-      console.error('Message handler error:', err);
+      log.error('Message handler error', err.message);
     }
   });
 
@@ -530,7 +533,7 @@ function handleMove(playerId, msg) {
 // the lifecycle via the exported server.
 if (require.main === module) {
   server.listen(PORT, () => {
-    console.log(`WebSocket server running on ws://localhost:${PORT}`);
+    log.info(`WebSocket server running on ws://localhost:${PORT}`);
   });
 
   // Flush the AI worker's learned memory before exiting.
