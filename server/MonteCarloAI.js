@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const gameRules = require('./gameRules');
 
 // --- Constants ---
 const EXPLORATION_WEIGHT = 1.41; // sqrt(2)
@@ -124,11 +125,7 @@ class MCTSNode {
   }
 
   _getAvailableMoves() {
-    const moves = [];
-    for (let i = 0; i < this.board.length; i++) {
-      if (this.board[i] === '') { moves.push(i); }
-    }
-    return moves;
+    return gameRules.getAvailableMoves(this.board);
   }
 
   _nextSymbol() {
@@ -145,36 +142,11 @@ class MCTSNode {
   }
 
   _generateWinSequences() {
-    const cols = this.cols;
-    const rows = this.rows;
-    const sequences = [];
-
-    for (let r = 0; r < rows; r++) {
-      const row = [];
-      for (let c = 0; c < cols; c++) { row.push(r * cols + c); }
-      sequences.push(row);
-    }
-    for (let c2 = 0; c2 < cols; c2++) {
-      const col = [];
-      for (let r2 = 0; r2 < rows; r2++) { col.push(r2 * cols + c2); }
-      sequences.push(col);
-    }
-    if (cols === rows) {
-      const d1 = [], d2 = [];
-      for (let d = 0; d < cols; d++) {
-        d1.push(d * cols + d);
-        d2.push(d * cols + (cols - 1 - d));
-      }
-      sequences.push(d1);
-      sequences.push(d2);
-    }
-    return sequences;
+    return gameRules.generateWinningSequences(this.cols, this.rows);
   }
 
   _checkWinner(symbol) {
-    const board = this.board;
-    const sequences = this._generateWinSequences();
-    return sequences.some((seq) => seq.every((idx) => board[idx] === symbol));
+    return gameRules.checkWin(this.board, symbol, this._generateWinSequences());
   }
 
   bestChild(explorationWeight) {
@@ -214,21 +186,15 @@ class MCTSNode {
   simulate() {
     const simBoard = this.board.slice();
     let currentSymbol = this._nextSymbol();
-
-    const available = [];
-    for (let i = 0; i < simBoard.length; i++) {
-      if (simBoard[i] === '') { available.push(i); }
-    }
-
+    const available = gameRules.getAvailableMoves(simBoard);
     const sequences = this._generateWinSequences();
-    const hasWon = (sym) => sequences.some((seq) => seq.every((idx) => simBoard[idx] === sym));
 
     while (available.length > 0) {
       const randIdx = Math.floor(Math.random() * available.length);
       const move = available.splice(randIdx, 1)[0];
       simBoard[move] = currentSymbol;
 
-      if (hasWon(currentSymbol)) {
+      if (gameRules.checkWin(simBoard, currentSymbol, sequences)) {
         return currentSymbol;
       }
 

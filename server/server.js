@@ -5,6 +5,7 @@ const http = require('http');
 const crypto = require('crypto');
 const MonteCarloAI = require('./MonteCarloAI');
 const auth = require('./auth');
+const gameRules = require('./gameRules');
 
 // Constants
 const PORT = process.env.PORT || 8082;
@@ -173,40 +174,6 @@ function resetGameTimeout(gameId) {
   }, GAME_TIMEOUT_MS);
 }
 
-// --- Win detection ---
-
-function generateWinningSequences(cols, rows) {
-  const sequences = [];
-  for (let r = 0; r < rows; r++) {
-    const row = [];
-    for (let c = 0; c < cols; c++) { row.push(r * cols + c); }
-    sequences.push(row);
-  }
-  for (let c2 = 0; c2 < cols; c2++) {
-    const col = [];
-    for (let r2 = 0; r2 < rows; r2++) { col.push(r2 * cols + c2); }
-    sequences.push(col);
-  }
-  if (cols === rows) {
-    const d1 = [], d2 = [];
-    for (let d = 0; d < cols; d++) {
-      d1.push(d * cols + d);
-      d2.push(d * cols + (cols - 1 - d));
-    }
-    sequences.push(d1);
-    sequences.push(d2);
-  }
-  return sequences;
-}
-
-function checkWin(board, symbol, sequences) {
-  return sequences.some((seq) => seq.every((idx) => board[idx] === symbol));
-}
-
-function checkDraw(board) {
-  return board.every((cell) => cell !== '');
-}
-
 // --- Game lifecycle ---
 
 function createGame(player1Id, player2Id) {
@@ -335,11 +302,11 @@ function processAIMove(gameId) {
 
     sendTo(game.player1, { type: 'moveMade', index: aiMove, symbol: game.aiSymbol });
 
-    const sequences = generateWinningSequences(game.cols, game.rows);
-    if (checkWin(game.board, game.aiSymbol, sequences)) {
+    const sequences = gameRules.generateWinningSequences(game.cols, game.rows);
+    if (gameRules.checkWin(game.board, game.aiSymbol, sequences)) {
       sendTo(game.player1, { type: 'gameOver', result: 'win', winner: 'Computer', symbol: game.aiSymbol });
       endGame(gameId, game.aiSymbol);
-    } else if (checkDraw(game.board)) {
+    } else if (gameRules.checkDraw(game.board)) {
       sendTo(game.player1, { type: 'gameOver', result: 'draw' });
       endGame(gameId, 'draw');
     } else {
@@ -540,12 +507,12 @@ function handleMove(playerId, msg) {
 
   notifyBothPlayers(game, { type: 'moveMade', index: idx, symbol });
 
-  const sequences = generateWinningSequences(game.cols, game.rows);
-  if (checkWin(game.board, symbol, sequences)) {
+  const sequences = gameRules.generateWinningSequences(game.cols, game.rows);
+  if (gameRules.checkWin(game.board, symbol, sequences)) {
     const winnerName = players[playerId] ? players[playerId].name : 'Unknown';
     notifyBothPlayers(game, { type: 'gameOver', result: 'win', winner: winnerName, symbol });
     endGame(msg.gameId, symbol);
-  } else if (checkDraw(game.board)) {
+  } else if (gameRules.checkDraw(game.board)) {
     notifyBothPlayers(game, { type: 'gameOver', result: 'draw' });
     endGame(msg.gameId, 'draw');
   } else {
