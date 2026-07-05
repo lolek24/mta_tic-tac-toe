@@ -131,6 +131,7 @@ sap.ui.define(
 
         for (let j = 0; j < total; j++) {
           oBoard.addItem(new customControl({
+            label: this._text('cellLabel', [String(j + 1)]),
             press: this._onCellPress.bind(this, j),
           }));
         }

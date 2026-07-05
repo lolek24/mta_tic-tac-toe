@@ -12,6 +12,9 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
     metadata: {
       properties: {
         symbol: { type: 'string', defaultValue: '' },
+        // Accessible label for an empty cell (e.g. "Cell 5"); occupied cells
+        // announce their symbol instead.
+        label: { type: 'string', defaultValue: '' },
       },
       aggregations: {
         _icon: { type: 'sap.ui.core.Icon', multiple: false, visibility: 'hidden' },
@@ -32,11 +35,17 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
     renderer: {
       apiVersion: 2,
       render: function(oRm, oControl) {
+        const sSymbol = oControl.getSymbol();
+
         oRm.openStart('div', oControl);
         oRm.class('tttCell');
+        // Focusable, operable button semantics for keyboard + screen readers.
+        oRm.attr('role', 'button');
+        oRm.attr('tabindex', '0');
+        oRm.attr('aria-label', sSymbol || oControl.getLabel());
         oRm.openEnd();
 
-        if (oControl.getSymbol()) {
+        if (sSymbol) {
           oRm.renderControl(oControl.getAggregation('_icon'));
         }
 
@@ -52,7 +61,18 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
       this.invalidate();
     },
 
-    onmousedown: function() {
+    // Pointer (mouse + touch) activation.
+    ontap: function() {
+      this.firePress();
+    },
+
+    // Keyboard activation (Enter / Space).
+    onsapenter: function() {
+      this.firePress();
+    },
+
+    onsapspace: function(oEvent) {
+      oEvent.preventDefault(); // stop the page from scrolling on Space
       this.firePress();
     },
   });
