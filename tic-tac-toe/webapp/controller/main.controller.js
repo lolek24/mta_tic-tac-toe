@@ -2,16 +2,16 @@ sap.ui.define(
   [
     'sap/m/MessageToast',
     'sap/m/MessageBox',
-    'sap/ui/core/mvc/Controller',
+    'com/tic-tac-toe/controller/BaseController',
     'sap/ui/model/json/JSONModel',
     'com/tic-tac-toe/custom/ui/containers/customControl',
   ],
-  function(MessageToast, MessageBox, Controller, JSONModel, customControl) {
+  function(MessageToast, MessageBox, BaseController, JSONModel, customControl) {
     'use strict';
 
     const CELL_SIZE_PX = 120;
 
-    return Controller.extend('com.tic-tac-toe.controller.main', {
+    return BaseController.extend('com.tic-tac-toe.controller.main', {
       _board: [],
       _gameover: false,
       _ws: null,
@@ -31,13 +31,7 @@ sap.ui.define(
 
         this._boundDispatch = this._dispatch.bind(this);
 
-        this.getOwnerComponent().getRouter()
-          .getRoute('game').attachPatternMatched(this._onGameEntered, this);
-      },
-
-      // i18n helper: resolve a text key (with optional {0},{1}… placeholders).
-      _text: function(sKey, aArgs) {
-        return this.getOwnerComponent().getModel('i18n').getResourceBundle().getText(sKey, aArgs);
+        this.getRouter().getRoute('game').attachPatternMatched(this._onGameEntered, this);
       },
 
       _onGameEntered: function() {

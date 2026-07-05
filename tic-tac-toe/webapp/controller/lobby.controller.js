@@ -2,17 +2,17 @@ sap.ui.define(
   [
     'sap/m/MessageBox',
     'sap/m/MessageToast',
-    'sap/ui/core/mvc/Controller',
+    'com/tic-tac-toe/controller/BaseController',
     'sap/ui/model/json/JSONModel',
   ],
-  function(MessageBox, MessageToast, Controller, JSONModel) {
+  function(MessageBox, MessageToast, BaseController, JSONModel) {
     'use strict';
 
     const WS_PORT = 8082;
     const RECONNECT_DELAY_MS = 2000;
     const MAX_RECONNECT_ATTEMPTS = 5;
 
-    return Controller.extend('com.tic-tac-toe.controller.lobby', {
+    return BaseController.extend('com.tic-tac-toe.controller.lobby', {
       ws: null,
       _reconnectAttempts: 0,
       _reconnectTimer: null,
@@ -29,13 +29,7 @@ sap.ui.define(
         // Stable handler reference so it can be add/removeEventListener'd.
         this._onWsMessage = this._handleWsMessage.bind(this);
 
-        this.getOwnerComponent().getRouter()
-          .getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
-      },
-
-      // i18n helper: resolve a text key (with optional {0},{1}… placeholders).
-      _text: function(sKey, aArgs) {
-        return this.getOwnerComponent().getModel('i18n').getResourceBundle().getText(sKey, aArgs);
+        this.getRouter().getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
       },
 
       _getWsUrl: function() {
