@@ -53,12 +53,13 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
       }
     },
 
-    placeSymbol: function(symbol) {
-      this.setProperty('symbol', symbol, true);
+    // Keep the icon in sync whenever the bound symbol changes.
+    setSymbol: function(sSymbol) {
+      this.setProperty('symbol', sSymbol);
       const oIcon = this.getAggregation('_icon');
-      oIcon.setSrc(symbol === 'X' ? ICON_X : ICON_O);
-      oIcon.setVisible(true);
-      this.invalidate();
+      oIcon.setSrc(sSymbol === 'X' ? ICON_X : ICON_O);
+      oIcon.setVisible(!!sSymbol);
+      return this;
     },
 
     // Pointer (mouse + touch) activation.

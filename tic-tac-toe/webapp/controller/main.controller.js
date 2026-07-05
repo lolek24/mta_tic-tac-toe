@@ -4,15 +4,13 @@ sap.ui.define(
     'sap/m/MessageBox',
     'com/tic-tac-toe/controller/BaseController',
     'sap/ui/model/json/JSONModel',
-    'com/tic-tac-toe/custom/ui/containers/customControl',
   ],
-  function(MessageToast, MessageBox, BaseController, JSONModel, customControl) {
+  function(MessageToast, MessageBox, BaseController, JSONModel) {
     'use strict';
 
     const CELL_SIZE_PX = 120;
 
     return BaseController.extend('com.tic-tac-toe.controller.main', {
-      _board: [],
       _gameover: false,
       _ws: null,
       _gameId: null,
@@ -26,6 +24,7 @@ sap.ui.define(
           myName: '',
           opponentName: '',
           myTurn: false,
+          cells: [],
         });
         this.getView().setModel(oGameModel, 'game');
 
@@ -72,7 +71,7 @@ sap.ui.define(
 
         switch (msg.type) {
           case 'moveMade':
-            this._placeSymbol(msg.index, msg.symbol);
+            oModel.setProperty(`/cells/${msg.index}/symbol`, msg.symbol);
             oModel.setProperty('/myTurn', msg.symbol !== this._mySymbol);
             break;
 
@@ -114,36 +113,23 @@ sap.ui.define(
         }
       },
 
+      // Populate the board model (bound to the CSSGrid items) and size the grid.
       _buildBoard: function(cols, rows) {
         const total = cols * rows;
-
-        this._board = [];
         this._gameover = false;
 
+        const aCells = [];
         for (let i = 0; i < total; i++) {
-          this._board.push('');
+          aCells.push({ index: i, symbol: '', label: this._text('cellLabel', [String(i + 1)]) });
         }
+        this.getView().getModel('game').setProperty('/cells', aCells);
 
         const oBoard = this.getView().byId('board');
         oBoard.setGridTemplateColumns(`repeat(${cols}, ${CELL_SIZE_PX}px)`);
         oBoard.setGridTemplateRows(`repeat(${rows}, ${CELL_SIZE_PX}px)`);
-        oBoard.removeAllItems();
-
-        for (let j = 0; j < total; j++) {
-          oBoard.addItem(new customControl({
-            label: this._text('cellLabel', [String(j + 1)]),
-            press: this._onCellPress.bind(this, j),
-          }));
-        }
       },
 
-      _placeSymbol: function(index, symbol) {
-        this._board[index] = symbol;
-        const oBoard = this.getView().byId('board');
-        oBoard.getItems()[index].placeSymbol(symbol);
-      },
-
-      _onCellPress: function(index) {
+      onCellPress: function(oEvent) {
         if (this._gameover) { return; }
 
         const oModel = this.getView().getModel('game');
@@ -152,7 +138,8 @@ sap.ui.define(
           return;
         }
 
-        if (this._board[index] !== '') { return; }
+        const iIndex = oEvent.getSource().getBindingContext('game').getProperty('index');
+        if (oModel.getProperty(`/cells/${iIndex}/symbol`) !== '') { return; }
 
         if (!this._ws || this._ws.readyState !== WebSocket.OPEN) {
           MessageToast.show(this._text('connectionLost'));
@@ -162,7 +149,7 @@ sap.ui.define(
         this._ws.send(JSON.stringify({
           type: 'move',
           gameId: this._gameId,
-          index: index,
+          index: iIndex,
         }));
       },
 
