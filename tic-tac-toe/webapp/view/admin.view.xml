@@ -1,0 +1,77 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m"
+	controllerName="com.tic-tac-toe.controller.admin" displayBlock="true">
+	<Page id="adminPage" title="{i18n>adminTitle}" showNavButton="true" navButtonPress=".onNavBack">
+		<content>
+			<!-- Token gate -->
+			<Panel visible="{= !${admin>/granted} }" class="sapUiMediumMargin">
+				<VBox width="360px" class="sapUiSmallMargin">
+					<Text text="{i18n>adminNotConnected}" class="sapUiSmallMarginBottom" />
+					<Input value="{admin>/token}" type="Password"
+						placeholder="{i18n>adminTokenPlaceholder}" class="sapUiSmallMarginBottom" />
+					<Button text="{i18n>adminConnect}" press=".onConnect" type="Emphasized" width="100%" />
+					<MessageStrip text="{i18n>adminDenied}" type="Error" showIcon="true"
+						visible="{admin>/denied}" class="sapUiSmallMarginTop" />
+				</VBox>
+			</Panel>
+
+			<!-- Dashboard -->
+			<VBox visible="{admin>/granted}" class="sapUiMediumMargin">
+				<HBox wrap="Wrap" class="sapUiSmallMarginBottom">
+					<ObjectStatus title="{i18n>uptime}" text="{admin>/uptime}" class="sapUiMediumMarginEnd" />
+					<ObjectStatus title="{i18n>playersOnline}" text="{admin>/counts/playersOnline}"
+						class="sapUiMediumMarginEnd" />
+					<ObjectStatus title="{i18n>gamesActive}" text="{admin>/counts/gamesActive}"
+						class="sapUiMediumMarginEnd" />
+					<ObjectStatus title="{i18n>aiMemory}"
+						text="{admin>/aiMemory/positions} / {admin>/aiMemory/totalVisits}" />
+				</HBox>
+
+				<Button text="{i18n>resetAiMemory}" icon="sap-icon://delete"
+					press=".onResetAiMemory" type="Reject" class="sapUiSmallMarginBottom" />
+
+				<Panel headerText="{i18n>sectionPlayers}" class="sapUiSmallMarginBottom">
+					<Table items="{admin>/players}" noDataText="{i18n>noPlayers}">
+						<columns>
+							<Column><Text text="{i18n>colName}" /></Column>
+							<Column><Text text="{i18n>colStatus}" /></Column>
+							<Column hAlign="End"><Text text="" /></Column>
+						</columns>
+						<items>
+							<ColumnListItem>
+								<cells>
+									<Text text="{admin>name}" />
+									<ObjectStatus text="{admin>status}"
+										state="{= ${admin>status} === 'lobby' ? 'Success' : 'Warning'}" />
+									<Button text="{i18n>kick}" type="Transparent"
+										icon="sap-icon://decline" press=".onKick" />
+								</cells>
+							</ColumnListItem>
+						</items>
+					</Table>
+				</Panel>
+
+				<Panel headerText="{i18n>sectionGames}">
+					<Table items="{admin>/games}" noDataText="{i18n>noGames}">
+						<columns>
+							<Column><Text text="{i18n>colType}" /></Column>
+							<Column><Text text="{i18n>colPlayers}" /></Column>
+							<Column hAlign="Center"><Text text="{i18n>colMoves}" /></Column>
+							<Column hAlign="End"><Text text="" /></Column>
+						</columns>
+						<items>
+							<ColumnListItem>
+								<cells>
+									<Text text="{admin>type}" />
+									<Text text="{admin>player1} vs {admin>player2}" />
+									<Text text="{admin>moves}" />
+									<Button text="{i18n>endGame}" type="Transparent"
+										icon="sap-icon://stop" press=".onEndGame" />
+								</cells>
+							</ColumnListItem>
+						</items>
+					</Table>
+				</Panel>
+			</VBox>
+		</content>
+	</Page>
+</mvc:View>

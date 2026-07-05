@@ -54,6 +54,14 @@ function recordGame(positionHistory, aiSymbol, result) {
     .then((m) => m.stats);
 }
 
+function getStats() {
+  return send({ type: 'stats' }).then((m) => m.stats);
+}
+
+function resetMemory() {
+  return send({ type: 'reset' }).then((m) => m.stats);
+}
+
 // Flush the worker's learned memory to disk, then stop it (graceful shutdown).
 function shutdown() {
   if (!worker) { return Promise.resolve(); }
@@ -61,4 +69,4 @@ function shutdown() {
   return send({ type: 'save' }).catch(() => {}).then(() => w.terminate());
 }
 
-module.exports = { findBestMove, recordGame, shutdown };
+module.exports = { findBestMove, recordGame, getStats, resetMemory, shutdown };

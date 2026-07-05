@@ -25,6 +25,13 @@ parentPort.on('message', (msg) => {
         MonteCarloAI.save();
         parentPort.postMessage({ id: msg.id, saved: true });
         break;
+      case 'stats':
+        parentPort.postMessage({ id: msg.id, stats: MonteCarloAI.getStats() });
+        break;
+      case 'reset':
+        MonteCarloAI.reset();
+        parentPort.postMessage({ id: msg.id, stats: MonteCarloAI.getStats() });
+        break;
       default:
         parentPort.postMessage({ id: msg.id, error: `Unknown message type: ${msg.type}` });
     }

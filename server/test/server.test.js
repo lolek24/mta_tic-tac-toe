@@ -173,3 +173,54 @@ test('vs AI: after the player moves the AI replies with its symbol', async () =>
   c.close();
   await delay(50);
 });
+
+test('admin: subscribe grants access and returns stats reflecting online players', async () => {
+  const a = await joinClient('Alice');
+  await delay(40);
+
+  const admin = connect();
+  await open(admin);
+  send(admin, { type: 'adminSubscribe', token: '' });
+  await delay(150);
+
+  assert.ok(last(admin, 'adminGranted'), 'admin was granted');
+  const stats = last(admin, 'adminStats');
+  assert.ok(stats, 'received an adminStats snapshot');
+  assert.ok(stats.counts.playersOnline >= 1, 'counts the online player');
+  assert.ok(stats.players.some((p) => p.name === 'Alice'), 'lists the player by name');
+
+  a.close(); admin.close();
+  await delay(50);
+});
+
+test('admin: kick disconnects the target player', async () => {
+  const victim = await joinClient('Victim');
+  await delay(40);
+  const victimId = last(victim, 'joined').id;
+  let closed = false;
+  victim.on('close', () => { closed = true; });
+
+  const admin = connect();
+  await open(admin);
+  send(admin, { type: 'adminSubscribe', token: '' });
+  await delay(100);
+  send(admin, { type: 'adminKick', targetId: victimId });
+  await delay(150);
+
+  assert.ok(closed, 'the kicked player was disconnected');
+  admin.close();
+  await delay(50);
+});
+
+test('admin: reset AI memory zeroes the position count', async () => {
+  const admin = connect();
+  await open(admin);
+  send(admin, { type: 'adminSubscribe', token: '' });
+  await delay(120);
+  send(admin, { type: 'adminResetAiMemory' });
+  await delay(250);
+
+  assert.strictEqual(last(admin, 'adminStats').aiMemory.positions, 0, 'AI memory cleared');
+  admin.close();
+  await delay(50);
+});

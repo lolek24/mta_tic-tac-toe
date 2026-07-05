@@ -1,6 +1,10 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core"
 	controllerName="com.tic-tac-toe.controller.lobby" displayBlock="true">
 	<Page id="lobbyPage" title="{i18n>lobbyTitle}">
+		<headerContent>
+			<Button icon="sap-icon://settings" tooltip="{i18n>admin}"
+				press=".onOpenAdmin" type="Transparent" />
+		</headerContent>
 		<content>
 			<FlexBox direction="Column" alignItems="Center" justifyContent="Center"
 				class="lobbyContainer">

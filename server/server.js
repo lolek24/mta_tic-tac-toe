@@ -30,6 +30,12 @@ const MSG_WINDOW_MS = 10 * 1000;   // sliding window for per-connection message 
 const MSG_MAX_PER_WINDOW = 60;     // max messages allowed per window per connection
 const INVITE_COOLDOWN_MS = 2000;   // minimum gap between invites from a single player
 
+// Admin console: gate admin actions behind this token. Empty => allow any (dev).
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || '';
+const ADMIN_STATS_INTERVAL_MS = 5000; // periodic push to subscribed admins
+const START_TIME = Date.now();
+let lastAiStats = { positions: 0, totalVisits: 0 }; // refreshed from the AI worker
+
 const ipConnections = {}; // ip -> active connection count (per-IP cap)
 
 // Reject connections at the handshake: Origin allowlist + per-IP cap + JWT auth.
@@ -62,6 +68,9 @@ const wss = new WebSocket.Server({
 
 if (ALLOWED_ORIGINS.length === 0) {
   log.warn('ALLOWED_ORIGINS not set — accepting WebSocket connections from any Origin');
+}
+if (!ADMIN_TOKEN) {
+  log.warn('ADMIN_TOKEN not set — the admin console accepts any token');
 }
 
 // State
@@ -133,7 +142,50 @@ function getPlayerList() {
 
 function broadcastPlayerList() {
   broadcast({ type: 'playerList', players: getPlayerList() });
+  broadcastAdminStats();
 }
+
+// --- Admin console ---
+
+function buildAdminStats() {
+  const gameList = Object.keys(games).map((gid) => {
+    const g = games[gid];
+    return {
+      id: gid,
+      type: g.isAI ? 'ai' : 'pvp',
+      player1: players[g.player1] ? players[g.player1].name : g.player1,
+      player2: g.isAI ? `Computer (${g.difficulty})` : (players[g.player2] ? players[g.player2].name : g.player2),
+      turn: g.currentTurn === g.player1 ? 1 : 2,
+      moves: g.board.filter((c) => c !== '').length,
+    };
+  });
+  const playerList = getPlayerList();
+  const aiGames = gameList.filter((g) => g.type === 'ai').length;
+
+  return {
+    type: 'adminStats',
+    uptimeSec: Math.floor((Date.now() - START_TIME) / 1000),
+    counts: {
+      playersOnline: playerList.length,
+      gamesActive: gameList.length,
+      aiGames: aiGames,
+      pvpGames: gameList.length - aiGames,
+    },
+    aiMemory: lastAiStats,
+    players: playerList,
+    games: gameList,
+  };
+}
+
+function broadcastAdminStats() {
+  const adminIds = Object.keys(players).filter((id) => players[id].isAdmin);
+  if (adminIds.length === 0) { return; }
+  const data = buildAdminStats();
+  adminIds.forEach((id) => sendTo(id, data));
+}
+
+// Periodic push so admins see live uptime / in-progress move counts.
+setInterval(() => { broadcastAdminStats(); }, ADMIN_STATS_INTERVAL_MS).unref();
 
 function sanitizeName(name) {
   if (typeof name !== 'string') return 'Player';
@@ -270,7 +322,11 @@ function endGame(gameId, result) {
   // Record game for AI learning (fire-and-forget; runs in the AI worker).
   if (game.isAI && game.positionHistory && result) {
     ai.recordGame(game.positionHistory, game.aiSymbol, result)
-      .then((stats) => log.info(`AI learned from game (${result})`, { positions: stats.positions, totalVisits: stats.totalVisits }))
+      .then((stats) => {
+        lastAiStats = stats;
+        log.info(`AI learned from game (${result})`, { positions: stats.positions, totalVisits: stats.totalVisits });
+        broadcastAdminStats();
+      })
       .catch((err) => log.error('Failed to record game', err.message));
   }
 
@@ -355,8 +411,9 @@ wss.on('connection', (ws, req) => {
     let msg;
     try { msg = JSON.parse(raw); } catch (e) { return; }
 
-    // Require a successful join before any other action.
-    if (msg.type !== 'join' && players[playerId].status === 'pending') {
+    // Require a successful join before any other action (admins are exempt).
+    if (msg.type !== 'join' && msg.type !== 'adminSubscribe' &&
+        !players[playerId].isAdmin && players[playerId].status === 'pending') {
       sendTo(playerId, { type: 'error', message: 'Not connected. Send join first.' });
       return;
     }
@@ -479,6 +536,48 @@ function handleMessage(playerId, msg) {
         sendTo(opponentId, { type: 'opponentLeft' });
         endGame(msg.gameId);
       }
+      break;
+    }
+
+    // --- Admin console ---
+
+    case 'adminSubscribe':
+      if (ADMIN_TOKEN && msg.token !== ADMIN_TOKEN) {
+        sendTo(playerId, { type: 'adminDenied' });
+        break;
+      }
+      players[playerId].isAdmin = true;
+      sendTo(playerId, { type: 'adminGranted' });
+      sendTo(playerId, buildAdminStats());
+      // Refresh the AI memory figures from the worker, then push again.
+      ai.getStats()
+        .then((stats) => { lastAiStats = stats; broadcastAdminStats(); })
+        .catch((err) => log.error('Admin AI stats failed', err.message));
+      break;
+
+    case 'adminResetAiMemory':
+      if (!players[playerId].isAdmin) break;
+      ai.resetMemory()
+        .then((stats) => { lastAiStats = stats; broadcastAdminStats(); })
+        .catch((err) => log.error('AI memory reset failed', err.message));
+      break;
+
+    case 'adminEndGame': {
+      if (!players[playerId].isAdmin) break;
+      if (typeof msg.gameId !== 'string') break;
+      const ag = games[msg.gameId];
+      if (!ag) break;
+      sendTo(ag.player1, { type: 'opponentLeft' });
+      if (!ag.isAI) { sendTo(ag.player2, { type: 'opponentLeft' }); }
+      endGame(msg.gameId);
+      break;
+    }
+
+    case 'adminKick': {
+      if (!players[playerId].isAdmin) break;
+      if (typeof msg.targetId !== 'string') break;
+      const kicked = players[msg.targetId];
+      if (kicked && kicked.ws) { kicked.ws.close(); }
       break;
     }
   }

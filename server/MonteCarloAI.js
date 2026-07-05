@@ -292,6 +292,15 @@ function recordGame(positionHistory, aiSymbol, result) {
 }
 
 /**
+ * Clear the learned position memory (admin action).
+ */
+function resetMemory() {
+  memory = {};
+  memoryDirty = true;
+  saveMemory();
+}
+
+/**
  * Get memory statistics for monitoring.
  */
 function getStats() {
@@ -311,4 +320,5 @@ module.exports = {
   recordGame,
   getStats,
   save: saveMemory,
+  reset: resetMemory,
 };

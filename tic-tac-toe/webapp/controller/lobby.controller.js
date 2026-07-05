@@ -8,7 +8,6 @@ sap.ui.define(
   function(MessageBox, MessageToast, BaseController, JSONModel) {
     'use strict';
 
-    const WS_PORT = 8082;
     const RECONNECT_DELAY_MS = 2000;
     const MAX_RECONNECT_ATTEMPTS = 5;
 
@@ -30,19 +29,6 @@ sap.ui.define(
         this._onWsMessage = this._handleWsMessage.bind(this);
 
         this.getRouter().getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
-      },
-
-      _getWsUrl: function() {
-        const loc = window.location;
-        // Local dev (ui5 serve on :8081): connect straight to the standalone
-        // game server on its own port.
-        if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
-          return `ws://${loc.hostname}:${WS_PORT}`;
-        }
-        // Deployed: go through the approuter "/game-server" route on the same
-        // origin, so the connection is wss (on https) and XSUAA-authenticated.
-        const proto = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-        return `${proto}//${loc.host}/game-server`;
       },
 
       _onLobbyEntered: function() {
@@ -68,7 +54,7 @@ sap.ui.define(
         const oModel = this.getView().getModel('lobby');
         this._onReadyOnce = onReady || null;
 
-        this.ws = new WebSocket(this._getWsUrl());
+        this.ws = new WebSocket(this.getWsUrl());
 
         this.ws.onopen = () => {
           this._reconnectAttempts = 0;
@@ -236,6 +222,10 @@ sap.ui.define(
 
         this.ws.send(JSON.stringify({ type: 'invite', targetId: targetId }));
         MessageToast.show(this._text('inviteSent'));
+      },
+
+      onOpenAdmin: function() {
+        this.getRouter().navTo('admin');
       },
 
       onExit: function() {

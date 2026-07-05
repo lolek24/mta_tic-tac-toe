@@ -84,6 +84,11 @@
 					"name": "game",
 					"pattern": "game",
 					"target": ["gameTarget"]
+				},
+				{
+					"name": "admin",
+					"pattern": "admin",
+					"target": ["adminTarget"]
 				}
 			],
 			"targets": {
@@ -96,6 +101,11 @@
 					"transition": "slide",
 					"id": "main",
 					"name": "main"
+				},
+				"adminTarget": {
+					"transition": "slide",
+					"id": "admin",
+					"name": "admin"
 				}
 			}
 		}
