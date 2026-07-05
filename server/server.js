@@ -96,12 +96,13 @@ function clearInvitesFor(playerId) {
 }
 
 // Periodically prune expired invites so the registry can't grow unbounded.
+// unref() so this timer never keeps the process alive on its own (e.g. tests).
 setInterval(() => {
   const now = Date.now();
   Object.keys(invites).forEach((key) => {
     if (invites[key] < now) { delete invites[key]; }
   });
-}, INVITE_SWEEP_MS);
+}, INVITE_SWEEP_MS).unref();
 
 // --- Helpers ---
 
@@ -558,6 +559,12 @@ function handleMove(playerId, msg) {
   }
 }
 
-server.listen(PORT, () => {
-  console.log(`WebSocket server running on ws://localhost:${PORT}`);
-});
+// Only auto-listen when run directly; when required (tests) the caller controls
+// the lifecycle via the exported server.
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`WebSocket server running on ws://localhost:${PORT}`);
+  });
+}
+
+module.exports = { server, wss };

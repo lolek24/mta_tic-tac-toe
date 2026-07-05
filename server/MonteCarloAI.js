@@ -5,7 +5,8 @@ const path = require('path');
 
 // --- Constants ---
 const EXPLORATION_WEIGHT = 1.41; // sqrt(2)
-const MEMORY_FILE = path.join(__dirname, 'ai-memory.json');
+// Overridable so tests can point the transposition table at a throwaway file.
+const MEMORY_FILE = process.env.AI_MEMORY_FILE || path.join(__dirname, 'ai-memory.json');
 const MEMORY_SAVE_INTERVAL_MS = 30000; // save every 30 seconds
 const LEARNING_RATE = 0.8; // how much memory influences initial node values
 const MAX_MEMORY_ENTRIES = 50000; // cap to prevent unbounded growth
@@ -88,10 +89,10 @@ function updateMemory(board, aiSymbol, result) {
 // Initialize memory on module load
 loadMemory();
 
-// Periodic save
+// Periodic save (unref so it never keeps the process alive on its own)
 setInterval(() => {
   saveMemory();
-}, MEMORY_SAVE_INTERVAL_MS);
+}, MEMORY_SAVE_INTERVAL_MS).unref();
 
 // Save on process exit
 process.on('exit', saveMemory);

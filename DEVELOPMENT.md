@@ -37,6 +37,20 @@ From the `tic-tac-toe/` directory (run `npm install` first):
 > deprecated `@sap/grunt-sapui5-bestpractice-*` grunt tasks. UI5 runtime is loaded
 > from the CDN (`sapui5.hana.ondemand.com`) at both runtime and test time.
 
+### Server tests
+
+The WebSocket server has its own suite using the built-in Node test runner (no
+extra dependencies):
+
+```bash
+cd server && npm test   # node --test
+```
+
+Covers `auth.js` (JWT verification), `MonteCarloAI.js` (move selection + memory),
+and the full game protocol in `server.js` (join, invite/accept, turn validation,
+win/draw detection, vs-AI). Tests use `AI_MEMORY_FILE` to isolate the transposition
+table to a throwaway file.
+
 ## Architecture
 
 ### Project Structure
