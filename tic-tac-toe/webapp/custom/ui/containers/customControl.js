@@ -39,6 +39,8 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
 
         oRm.openStart('div', oControl);
         oRm.class('tttCell');
+        if (sSymbol === 'X') { oRm.class('tttCell--x'); }
+        else if (sSymbol === 'O') { oRm.class('tttCell--o'); }
         // Focusable, operable button semantics for keyboard + screen readers.
         oRm.attr('role', 'button');
         oRm.attr('tabindex', '0');

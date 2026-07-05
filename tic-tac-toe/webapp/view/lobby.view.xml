@@ -5,6 +5,11 @@
 			<FlexBox direction="Column" alignItems="Center" justifyContent="Center"
 				class="lobbyContainer">
 				<VBox width="400px" class="sapUiMediumMarginTop">
+					<VBox alignItems="Center" class="sapUiMediumMarginBottom">
+						<core:Icon src="sap-icon://grid" size="3rem" class="lobbyBrand" />
+						<Title text="{i18n>appTitle}" level="H1" titleStyle="H2"
+							class="sapUiSmallMarginTop" />
+					</VBox>
 					<Panel headerText="{i18n>joinGame}" class="sapUiSmallMarginBottom">
 						<VBox class="sapUiSmallMargin">
 							<Label text="{i18n>yourName}" />

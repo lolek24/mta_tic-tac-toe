@@ -20,6 +20,7 @@
 			<FlexBox alignItems="Center" justifyContent="Center" height="100%"
 				class="boardContainer">
 				<grid:CSSGrid id="board"
+					class="tttBoard"
 					gridTemplateColumns="repeat(3, 120px)"
 					gridTemplateRows="repeat(3, 120px)"
 					gridGap="0.5rem"
