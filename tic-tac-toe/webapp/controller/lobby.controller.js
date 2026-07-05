@@ -33,6 +33,11 @@ sap.ui.define(
           .getRoute('lobby').attachPatternMatched(this._onLobbyEntered, this);
       },
 
+      // i18n helper: resolve a text key (with optional {0},{1}… placeholders).
+      _text: function(sKey, aArgs) {
+        return this.getOwnerComponent().getModel('i18n').getResourceBundle().getText(sKey, aArgs);
+      },
+
       _getWsUrl: function() {
         const loc = window.location;
         // Local dev (ui5 serve on :8081): connect straight to the standalone
@@ -87,13 +92,13 @@ sap.ui.define(
         };
 
         this.ws.onerror = () => {
-          MessageToast.show('Cannot connect to server');
+          MessageToast.show(this._text('cannotConnect'));
         };
       },
 
       _attemptReconnect: function(name) {
         if (this._reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-          MessageToast.show('Connection lost. Click Connect to retry.');
+          MessageToast.show(this._text('connectionLostRetry'));
           this._enableConnectUI();
           this._reconnectAttempts = 0;
           return;
@@ -133,7 +138,7 @@ sap.ui.define(
             oModel.setProperty('/myId', msg.id);
             this.getView().byId('connectBtn').setEnabled(false);
             this.getView().byId('playerNameInput').setEnabled(false);
-            MessageToast.show(`Connected as ${msg.name}`);
+            MessageToast.show(this._text('connectedAs', [msg.name]));
             // Fire the one-shot onReady callback (e.g. auto "playAI" after join).
             if (this._onReadyOnce) {
               const cb = this._onReadyOnce;
@@ -151,7 +156,7 @@ sap.ui.define(
             break;
 
           case 'inviteDeclined':
-            MessageToast.show(`${msg.byName} declined your invite`);
+            MessageToast.show(this._text('inviteDeclined', [msg.byName]));
             break;
 
           case 'gameStart':
@@ -159,13 +164,13 @@ sap.ui.define(
             break;
 
           case 'error':
-            MessageToast.show(msg.message || 'Server error');
+            MessageToast.show(msg.message || this._text('serverError'));
             break;
 
           case 'gameOver':
             // Handle timeout while in lobby
             if (msg.result === 'timeout') {
-              MessageToast.show(msg.message || 'Game timed out');
+              MessageToast.show(msg.message || this._text('gameTimedOut'));
             }
             break;
         }
@@ -176,7 +181,7 @@ sap.ui.define(
         const name = oModel.getProperty('/playerName').trim();
 
         if (!name) {
-          MessageToast.show('Please enter your name');
+          MessageToast.show(this._text('enterNameFirst'));
           return;
         }
 
@@ -184,8 +189,8 @@ sap.ui.define(
       },
 
       _handleInvite: function(msg) {
-        MessageBox.confirm(`${msg.fromName} wants to play. Accept?`, {
-          title: 'Game Invite',
+        MessageBox.confirm(this._text('inviteConfirm', [msg.fromName]), {
+          title: this._text('gameInviteTitle'),
           onClose: (action) => {
             if (!this.ws || this.ws.readyState !== WebSocket.OPEN) { return; }
             const type = action === MessageBox.Action.OK ? 'acceptInvite' : 'declineInvite';
@@ -236,7 +241,7 @@ sap.ui.define(
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) { return; }
 
         this.ws.send(JSON.stringify({ type: 'invite', targetId: targetId }));
-        MessageToast.show('Invite sent!');
+        MessageToast.show(this._text('inviteSent'));
       },
 
       onExit: function() {

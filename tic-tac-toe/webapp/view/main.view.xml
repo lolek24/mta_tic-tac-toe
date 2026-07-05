@@ -1,19 +1,19 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns:grid="sap.ui.layout.cssgrid"
 	xmlns:core="sap.ui.core" xmlns="sap.m" controllerName="com.tic-tac-toe.controller.main" displayBlock="true">
-	<Page id="page" title="Tic Tac Toe" showNavButton="true" navButtonPress=".onNavBack">
+	<Page id="page" title="{i18n>gameTitle}" showNavButton="true" navButtonPress=".onNavBack">
 		<headerContent>
-			<Button text="Leave Game" id="leaveBtn" press=".onLeaveGame" type="Reject" />
+			<Button text="{i18n>leaveGame}" id="leaveBtn" press=".onLeaveGame" type="Reject" />
 		</headerContent>
 		<content>
 			<HBox justifyContent="Center" class="sapUiSmallMarginTop">
-				<ObjectStatus text="You ({game>/mySymbol}): {game>/myName}" state="Success"
+				<ObjectStatus text="{game>/myName} ({game>/mySymbol})" state="Success"
 					class="sapUiSmallMarginEnd" />
-				<ObjectStatus text="vs" class="sapUiSmallMarginEnd" />
+				<ObjectStatus text="{i18n>vs}" class="sapUiSmallMarginEnd" />
 				<ObjectStatus text="{game>/opponentName} ({game>/opponentSymbol})" state="Error" />
 			</HBox>
 			<HBox justifyContent="Center" class="sapUiTinyMarginTop">
 				<ObjectStatus id="turnIndicator"
-					text="{= ${game>/myTurn} ? 'Your turn' : 'Waiting...'}"
+					text="{= ${game>/myTurn} ? ${i18n>yourTurn} : ${i18n>waiting} }"
 					state="{= ${game>/myTurn} ? 'Success' : 'Warning'}" />
 			</HBox>
 			<FlexBox alignItems="Center" justifyContent="Center" height="100%"

@@ -35,6 +35,11 @@ sap.ui.define(
           .getRoute('game').attachPatternMatched(this._onGameEntered, this);
       },
 
+      // i18n helper: resolve a text key (with optional {0},{1}… placeholders).
+      _text: function(sKey, aArgs) {
+        return this.getOwnerComponent().getModel('i18n').getResourceBundle().getText(sKey, aArgs);
+      },
+
       _onGameEntered: function() {
         const oComponent = this.getOwnerComponent();
         const gameData = oComponent._gameData;
@@ -52,7 +57,7 @@ sap.ui.define(
         oModel.setProperty('/mySymbol', gameData.mySymbol);
         oModel.setProperty('/opponentSymbol', gameData.mySymbol === 'O' ? 'X' : 'O');
         oModel.setProperty('/opponentName', gameData.opponentName);
-        oModel.setProperty('/myName', 'You');
+        oModel.setProperty('/myName', this._text('you'));
         oModel.setProperty('/myTurn', gameData.mySymbol === 'O');
 
         this._buildBoard(gameData.cols, gameData.rows);
@@ -82,31 +87,31 @@ sap.ui.define(
             oModel.setProperty('/myTurn', false);
             if (msg.result === 'win') {
               if (msg.symbol === this._mySymbol) {
-                MessageBox.success('You win!', { title: 'Game Over' });
+                MessageBox.success(this._text('youWin'), { title: this._text('gameOverTitle') });
               } else {
-                MessageBox.error(`${msg.winner} wins!`, { title: 'Game Over' });
+                MessageBox.error(this._text('opponentWins', [msg.winner]), { title: this._text('gameOverTitle') });
               }
             } else if (msg.result === 'timeout') {
-              MessageBox.warning(msg.message || 'Game timed out', {
-                title: 'Timeout',
+              MessageBox.warning(msg.message || this._text('gameTimedOut'), {
+                title: this._text('timeoutTitle'),
                 onClose: () => this._goBackToLobby(),
               });
             } else {
-              MessageBox.information("It's a draw!", { title: 'Game Over' });
+              MessageBox.information(this._text('draw'), { title: this._text('gameOverTitle') });
             }
             break;
 
           case 'opponentLeft':
             this._gameover = true;
             oModel.setProperty('/myTurn', false);
-            MessageBox.warning('Opponent left the game', {
-              title: 'Game Over',
+            MessageBox.warning(this._text('opponentLeft'), {
+              title: this._text('gameOverTitle'),
               onClose: () => this._goBackToLobby(),
             });
             break;
 
           case 'error':
-            MessageToast.show(msg.message || 'Server error');
+            MessageToast.show(msg.message || this._text('serverError'));
             break;
 
           case 'playerList':
@@ -148,14 +153,14 @@ sap.ui.define(
 
         const oModel = this.getView().getModel('game');
         if (!oModel.getProperty('/myTurn')) {
-          MessageToast.show("It's not your turn");
+          MessageToast.show(this._text('notYourTurn'));
           return;
         }
 
         if (this._board[index] !== '') { return; }
 
         if (!this._ws || this._ws.readyState !== WebSocket.OPEN) {
-          MessageToast.show('Connection lost');
+          MessageToast.show(this._text('connectionLost'));
           return;
         }
 
@@ -184,8 +189,8 @@ sap.ui.define(
       },
 
       onLeaveGame: function() {
-        MessageBox.confirm('Are you sure you want to leave?', {
-          title: 'Leave Game',
+        MessageBox.confirm(this._text('leaveGameConfirm'), {
+          title: this._text('leaveGame'),
           onClose: (action) => {
             if (action === MessageBox.Action.OK) {
               if (this._ws && this._ws.readyState === WebSocket.OPEN) {

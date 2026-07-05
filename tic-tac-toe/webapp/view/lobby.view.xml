@@ -1,41 +1,41 @@
 <mvc:View xmlns:mvc="sap.ui.core.mvc" xmlns="sap.m" xmlns:core="sap.ui.core"
 	controllerName="com.tic-tac-toe.controller.lobby" displayBlock="true">
-	<Page id="lobbyPage" title="Tic Tac Toe - Lobby">
+	<Page id="lobbyPage" title="{i18n>lobbyTitle}">
 		<content>
 			<FlexBox direction="Column" alignItems="Center" justifyContent="Center"
 				class="lobbyContainer">
 				<VBox width="400px" class="sapUiMediumMarginTop">
-					<Panel headerText="Join Game" class="sapUiSmallMarginBottom">
+					<Panel headerText="{i18n>joinGame}" class="sapUiSmallMarginBottom">
 						<VBox class="sapUiSmallMargin">
-							<Label text="Your name:" />
-							<Input id="playerNameInput" placeholder="Enter your name..."
+							<Label text="{i18n>yourName}" />
+							<Input id="playerNameInput" placeholder="{i18n>enterNamePlaceholder}"
 								value="{lobby>/playerName}" class="sapUiSmallMarginBottom" />
-							<Button text="Connect" press=".onConnect" type="Emphasized"
+							<Button text="{i18n>connect}" press=".onConnect" type="Emphasized"
 								width="100%" id="connectBtn" />
 						</VBox>
 					</Panel>
-					<Panel headerText="Play vs Computer" class="sapUiSmallMarginBottom">
+					<Panel headerText="{i18n>playVsComputer}" class="sapUiSmallMarginBottom">
 						<VBox class="sapUiSmallMargin">
 							<HBox justifyContent="SpaceBetween" alignItems="Center" width="100%">
 								<HBox alignItems="Center">
 									<core:Icon src="sap-icon://desktop-mobile"
 										class="sapUiSmallMarginEnd" />
 									<VBox>
-										<Text text="Computer" />
-										<ObjectStatus text="Always available" state="Success" />
+										<Text text="{i18n>computer}" />
+										<ObjectStatus text="{i18n>alwaysAvailable}" state="Success" />
 									</VBox>
 								</HBox>
 								<Select id="difficultySelect" class="sapUiSmallMarginEnd">
-									<core:Item key="easy" text="Easy" />
-									<core:Item key="medium" text="Medium" />
-									<core:Item key="hard" text="Hard" />
+									<core:Item key="easy" text="{i18n>difficultyEasy}" />
+									<core:Item key="medium" text="{i18n>difficultyMedium}" />
+									<core:Item key="hard" text="{i18n>difficultyHard}" />
 								</Select>
-								<Button text="Play" press=".onPlayComputer" type="Accept" />
+								<Button text="{i18n>play}" press=".onPlayComputer" type="Accept" />
 							</HBox>
 						</VBox>
 					</Panel>
-					<Panel headerText="Online Players" id="playersPanel" visible="{lobby>/connected}">
-						<List id="playerList" items="{lobby>/players}" noDataText="No other players online...">
+					<Panel headerText="{i18n>onlinePlayers}" id="playersPanel" visible="{lobby>/connected}">
+						<List id="playerList" items="{lobby>/players}" noDataText="{i18n>noPlayersOnline}">
 							<CustomListItem>
 								<HBox justifyContent="SpaceBetween" alignItems="Center"
 									width="100%" class="sapUiSmallMargin">
@@ -48,7 +48,7 @@
 												state="{= ${lobby>status} === 'lobby' ? 'Success' : 'Warning'}" />
 										</VBox>
 									</HBox>
-									<Button text="Invite" press=".onInvite" type="Accept"
+									<Button text="{i18n>invite}" press=".onInvite" type="Accept"
 										visible="{= ${lobby>status} === 'lobby' &amp;&amp; ${lobby>id} !== ${lobby>/myId}}" />
 								</HBox>
 							</CustomListItem>
