@@ -3,7 +3,7 @@
 const WebSocket = require('ws');
 const http = require('http');
 const crypto = require('crypto');
-const MonteCarloAI = require('./MonteCarloAI');
+const ai = require('./aiClient');
 const auth = require('./auth');
 const gameRules = require('./gameRules');
 
@@ -264,15 +264,11 @@ function endGame(gameId, result) {
     clearTimeout(game.timeout);
   }
 
-  // Record game for AI learning
+  // Record game for AI learning (fire-and-forget; runs in the AI worker).
   if (game.isAI && game.positionHistory && result) {
-    try {
-      MonteCarloAI.recordGame(game.positionHistory, game.aiSymbol, result);
-      const stats = MonteCarloAI.getStats();
-      console.log(`AI learned from game (${result}). Memory: ${stats.positions} positions, ${stats.totalVisits} total visits`);
-    } catch (err) {
-      console.error('Failed to record game:', err.message);
-    }
+    ai.recordGame(game.positionHistory, game.aiSymbol, result)
+      .then((stats) => console.log(`AI learned from game (${result}). Memory: ${stats.positions} positions, ${stats.totalVisits} total visits`))
+      .catch((err) => console.error('Failed to record game:', err.message));
   }
 
   if (players[game.player1]) {
@@ -286,36 +282,40 @@ function endGame(gameId, result) {
   broadcastPlayerList();
 }
 
-function processAIMove(gameId) {
+async function processAIMove(gameId) {
   const game = games[gameId];
   if (!game || !game.isAI) return;
 
   try {
-    const aiMove = MonteCarloAI.findBestMove(
+    const aiMove = await ai.findBestMove(
       game.board, game.aiSymbol, game.cols, game.rows, game.difficulty
     );
 
+    // The player may have left (game removed) while the worker was computing.
+    const g = games[gameId];
+    if (!g || !g.isAI) return;
     if (aiMove === -1) return;
 
-    game.board[aiMove] = game.aiSymbol;
-    game.positionHistory.push(game.board.slice());
+    g.board[aiMove] = g.aiSymbol;
+    g.positionHistory.push(g.board.slice());
 
-    sendTo(game.player1, { type: 'moveMade', index: aiMove, symbol: game.aiSymbol });
+    sendTo(g.player1, { type: 'moveMade', index: aiMove, symbol: g.aiSymbol });
 
-    const sequences = gameRules.generateWinningSequences(game.cols, game.rows);
-    if (gameRules.checkWin(game.board, game.aiSymbol, sequences)) {
-      sendTo(game.player1, { type: 'gameOver', result: 'win', winner: 'Computer', symbol: game.aiSymbol });
-      endGame(gameId, game.aiSymbol);
-    } else if (gameRules.checkDraw(game.board)) {
-      sendTo(game.player1, { type: 'gameOver', result: 'draw' });
+    const sequences = gameRules.generateWinningSequences(g.cols, g.rows);
+    if (gameRules.checkWin(g.board, g.aiSymbol, sequences)) {
+      sendTo(g.player1, { type: 'gameOver', result: 'win', winner: 'Computer', symbol: g.aiSymbol });
+      endGame(gameId, g.aiSymbol);
+    } else if (gameRules.checkDraw(g.board)) {
+      sendTo(g.player1, { type: 'gameOver', result: 'draw' });
       endGame(gameId, 'draw');
     } else {
-      game.currentTurn = game.player1;
+      g.currentTurn = g.player1;
       resetGameTimeout(gameId);
     }
   } catch (err) {
     console.error('AI move error:', err);
-    sendTo(game.player1, { type: 'error', message: 'AI error, please restart' });
+    const g = games[gameId];
+    if (g) { sendTo(g.player1, { type: 'error', message: 'AI error, please restart' }); }
   }
 }
 
@@ -532,6 +532,11 @@ if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`WebSocket server running on ws://localhost:${PORT}`);
   });
+
+  // Flush the AI worker's learned memory before exiting.
+  const shutdown = () => { ai.shutdown().finally(() => process.exit(0)); };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 }
 
 module.exports = { server, wss };

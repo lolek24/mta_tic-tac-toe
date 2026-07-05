@@ -117,7 +117,10 @@ auth). Instead the WebSocket game server is reached through the approuter:
 - **Protocol**: JSON messages over WebSocket
 - **Message types**: `join`, `playAI`, `invite`, `acceptInvite`, `declineInvite`, `move`, `leaveGame`, `refreshList`
 - **Server responses**: `joined`, `playerList`, `gameStart`, `moveMade`, `gameOver`, `opponentLeft`, `inviteDeclined`
-- **AI**: Monte Carlo Tree Search with configurable difficulty (100/500/2000 iterations)
+- **AI**: Monte Carlo Tree Search with configurable difficulty (100/500/2000 iterations).
+  MCTS runs in a dedicated **worker thread** (`aiWorker.js`, driven by `aiClient.js`)
+  so the heavy computation never blocks the main event loop. The worker owns the
+  learning memory; `aiClient.shutdown()` flushes it on graceful exit.
 - **Game validation**: Server-authoritative — validates turns, moves, win/draw detection
 
 ### Game Flow

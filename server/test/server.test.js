@@ -12,6 +12,7 @@ const MEM = path.join(os.tmpdir(), `ttt-ai-mem-srv-${process.pid}.json`);
 process.env.AI_MEMORY_FILE = MEM;
 
 const { server, wss } = require('../server');
+const ai = require('../aiClient');
 
 let PORT;
 
@@ -23,6 +24,7 @@ before(async () => {
 after(async () => {
   wss.close();
   await new Promise((resolve) => server.close(resolve));
+  await ai.shutdown();
   try { fs.unlinkSync(MEM); } catch (e) { /* ignore */ }
 });
 
@@ -164,7 +166,8 @@ test('vs AI: after the player moves the AI replies with its symbol', async () =>
   assert.ok(gs && gs.opponent.startsWith('Computer'), 'AI game started');
 
   send(c, { type: 'move', gameId: gs.gameId, index: 4 });
-  await delay(600);
+  // Extra headroom: the first AI move also spins up the worker thread.
+  await delay(1500);
   const moves = all(c, 'moveMade');
   assert.ok(moves.length >= 2 && moves.some((m) => m.symbol === 'X'), 'AI responded as X');
   c.close();

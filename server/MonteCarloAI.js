@@ -309,4 +309,5 @@ module.exports = {
   findBestMove,
   recordGame,
   getStats,
+  save: saveMemory,
 };
