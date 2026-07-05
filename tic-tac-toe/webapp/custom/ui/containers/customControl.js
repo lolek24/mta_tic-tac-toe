@@ -2,95 +2,58 @@ sap.ui.define(['sap/ui/core/Control', 'sap/ui/core/Icon'], function(
   Control,
   Icon
 ) {
+  'use strict';
+
+  var ICON_X = 'sap-icon://decline';
+  var ICON_O = 'sap-icon://circle-task';
+  var ICON_SIZE = '4em';
+
   return Control.extend('com.tic-tac-toe.custom.ui.containers.customControl', {
     metadata: {
       properties: {
-        width: {
-          type: 'sap.ui.core.CSSSize',
-          defaultValue: '100%',
-        },
-        height: {
-          type: 'sap.ui.core.CSSSize',
-          defaultValue: 'auto',
-        },
-        icon: {
-          type: 'sap.ui.core.Icon',
-        },
-        displayIcon: {
-          type: 'boolean',
-          defaultValue: false,
-        },
+        symbol: { type: 'string', defaultValue: '' },
       },
       aggregations: {
-        content: {
-          type: 'sap.ui.core.Control',
-        },
-        _actionIcon: {
-          type: 'sap.ui.core.Icon',
-          multiple: false,
-          visibility: 'hidden',
-        },
+        _icon: { type: 'sap.ui.core.Icon', multiple: false, visibility: 'hidden' },
       },
-      defaultAggregation: 'content',
       events: {
-        hover: {},
-        out: {},
-        press: {
-          parameters: {
-            oEvent: {
-              type: 'object',
-            },
-          },
-        },
+        press: {},
       },
     },
 
     init: function() {
-      this.setAggregation(
-        '_actionIcon',
-        new Icon({
-          src: this.icon,
-        })
-      );
+      this.setAggregation('_icon', new Icon({
+        src: ICON_X,
+        size: ICON_SIZE,
+        visible: false,
+      }));
     },
-    renderer: function(oRm, oControl) {
-      var icon = '';
 
+    renderer: function(oRm, oControl) {
       oRm.write('<div');
       oRm.writeControlData(oControl);
-      //oRm.addStyle("background-color", "blue");
-      //oRm.addStyle('width', oControl.getProperty('width'));
-      //oRm.addStyle('height', oControl.getProperty('height'));
+      oRm.addClass('tttCell');
+      oRm.writeClasses();
       oRm.writeStyles();
       oRm.write('>');
 
-      // oControl.getAggregation("_actionIcon");
-      oRm.renderControl(oControl.getAggregation('_actionIcon'));
-
-      $(oControl.getContent()).each(function() {
-        oRm.renderControl(this);
-      });
+      if (oControl.getSymbol()) {
+        oRm.renderControl(oControl.getAggregation('_icon'));
+      }
 
       oRm.write('</div>');
     },
-    onmousedown: function(oEvent) {
-      this.getAggregation('_actionIcon').setSrc(this.getIcon());
-      this.getAggregation('_actionIcon').setSize('5em');
-      this.firePress(oEvent);
+
+    placeSymbol: function(symbol) {
+      this.setProperty('symbol', symbol, true);
+      var oIcon = this.getAggregation('_icon');
+      oIcon.setSrc(symbol === 'X' ? ICON_X : ICON_O);
+      oIcon.setVisible(true);
+      this.invalidate();
     },
-    onmouseover: function() {
-      //this.getAggregation("_actionIcon").setSrc(this.getIcon());
-      //this.fireHover();
-    },
-    onmouseout: function() {},
-    onAfterRendering: function() {
-      //if I need to do any post render actions, it will happen here
-      if (sap.ui.core.Control.prototype.onAfterRendering) {
-        sap.ui.core.Control.prototype.onAfterRendering.apply(this, arguments); //run the super class's method first
-      }
-    },
-    setIcon: function(iValue) {
-      this.setProperty('icon', iValue, true);
+
+    onmousedown: function() {
+      this.firePress();
     },
   });
 });

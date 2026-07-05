@@ -28,7 +28,10 @@ modules:
     type: html5
     path: tic-tac-toe
     build-parameters:
-      builder: grunt
+      builder: custom
+      commands:
+        - npm ci
+        - npm run build
       supported-platforms: []
       build-result: dist
 resources:
@@ -47,9 +50,4 @@ resources:
       path: ./xs-security.json
       service-plan: application
       service: xsuaa
-    type: org.cloudfoundry.managed-service
-  - name: dest_mta_tic-tac-toe
-    parameters:
-      service-plan: lite
-      service: destination
     type: org.cloudfoundry.managed-service

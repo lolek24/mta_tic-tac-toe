@@ -1,11 +1,19 @@
 {
   "name": "tic-tac-toe",
+  "version": "1.0.0",
   "description": "",
   "devDependencies": {
-    "@sap/grunt-sapui5-bestpractice-build": "1.4.1",
-    "@sap/grunt-sapui5-bestpractice-test": "2.0.1"
+    "@ui5/cli": "^4.0.57",
+    "@ui5/linter": "^1.23.1",
+    "karma": "^6.4.4",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-ui5": "^4.1.0"
   },
   "scripts": {
-    "test": "grunt unit_and_integration_tests"
+    "build": "ui5 build --clean-dest",
+    "start": "ui5 serve --port 8081 --open index.html",
+    "lint": "ui5lint",
+    "test": "karma start karma.conf.js --single-run",
+    "unit_and_integration_tests": "npm test"
   }
 }
