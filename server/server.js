@@ -18,6 +18,11 @@ const GAME_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes inactivity
 const VALID_DIFFICULTIES = ['easy', 'medium', 'hard'];
 const MAX_NAME_LENGTH = 30;
 const MAX_PAYLOAD_BYTES = 4096; // reject oversized WS frames (DoS guard)
+// Game messages are tiny single-frame JSON, so cap fragments/buffered chunks far
+// below the ws 8.21.0 defaults (131072 / 1048576) to harden against the
+// tiny-fragment/chunk memory-exhaustion DoS (GHSA-96hv-2xvq-fx4p).
+const MAX_WS_FRAGMENTS = 10;
+const MAX_WS_BUFFERED_CHUNKS = 256;
 const INVITE_TIMEOUT_MS = 60 * 1000; // invites expire after 1 minute
 const INVITE_SWEEP_MS = 60 * 1000;   // periodic prune of expired invites
 
@@ -63,6 +68,8 @@ const server = http.createServer();
 const wss = new WebSocket.Server({
   server,
   maxPayload: MAX_PAYLOAD_BYTES,
+  maxFragments: MAX_WS_FRAGMENTS,
+  maxBufferedChunks: MAX_WS_BUFFERED_CHUNKS,
   verifyClient,
 });
 
