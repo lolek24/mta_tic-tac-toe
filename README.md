@@ -2,15 +2,14 @@
 
 A multiplayer Tic Tac Toe game built with SAPUI5, featuring real-time online play via WebSocket and an AI opponent powered by Monte Carlo Tree Search.
 
+**Contents:** [Features](#features) · [Quick Start](#quick-start) · [Development](#development) · [Architecture](#architecture) · [Project Structure](#project-structure) · [Tech Stack](#tech-stack) · [Deploy to SAP BTP](#deploy-to-sap-btp)
+
 ## Features
 
-- **Multiplayer** — Play against other players in real-time via WebSocket
-- **AI Opponent** — Play against the computer with 3 difficulty levels (Easy, Medium, Hard)
-- **Monte Carlo AI** — Server-side MCTS algorithm with configurable simulation depth
-- **Lobby System** — See online players, send/receive game invitations
-- **Auto-reconnect** — Automatic reconnection with exponential backoff
-- **Game timeout** — 10-minute inactivity timeout prevents hanging games
-- **SAP MTA** — Deployable to SAP BTP via HTML5 Application Repository
+- **Multiplayer** — real-time play against other players via WebSocket, with a lobby showing online players and game invitations
+- **AI opponent** — server-side Monte Carlo Tree Search with three difficulty levels (Easy, Medium, Hard)
+- **Robust connection handling** — automatic reconnection with exponential backoff, 10-minute inactivity timeout to prevent hanging games
+- **SAP MTA** — deployable to SAP BTP via the HTML5 Application Repository
 
 ## Quick Start
 
@@ -19,42 +18,46 @@ A multiplayer Tic Tac Toe game built with SAPUI5, featuring real-time online pla
 - Node.js 20+ (Node 22+ is required for the SAP AppRouter module when deploying to BTP)
 - npm
 
-### Run Locally
+### Run locally
 
-Start both servers:
+The app needs two servers running side by side:
+
+**1. WebSocket server** (multiplayer + AI) — listens on `ws://localhost:8082`
 
 ```bash
-# 1. WebSocket server (handles multiplayer + AI)
 cd server
 npm install
 npm start
-# → ws://localhost:8082
+```
 
-# 2. UI server (serves SAPUI5 app via UI5 Tooling)
+**2. UI server** (SAPUI5 app via UI5 Tooling) — listens on `http://localhost:8081`
+
+```bash
 cd tic-tac-toe
 npm install
 npm start
-# → http://localhost:8081
 ```
 
-Open **http://localhost:8081** in your browser. To test multiplayer, open a second browser window.
+Then open **http://localhost:8081** in your browser.
 
-### Build & Test
+### How to play
 
-From `tic-tac-toe/` (run `npm install` first):
+- **vs Computer** — select a difficulty (Easy / Medium / Hard) and click *Play*
+- **vs Player** — enter your name, click *Connect*, then invite an online player. To test locally, open a second browser window.
 
-```bash
-npm run build   # ui5 build → dist/
-npm test        # karma + karma-ui5 (unit + OPA, ChromeHeadless)
-npm run lint    # ui5lint
-```
+## Development
+
+All commands run from `tic-tac-toe/` (after `npm install`):
+
+| Command | What it does |
+|---------|--------------|
+| `npm run build` | `ui5 build` → `dist/` |
+| `npm test` | karma + karma-ui5 (unit + OPA, ChromeHeadless) |
+| `npm run lint` | ui5lint |
 
 The build/test toolchain uses **UI5 Tooling** (`@ui5/cli`) with **karma-ui5**; the UI5 runtime is loaded from the CDN at both runtime and test time.
 
-### How to Play
-
-1. **vs Computer** — Select difficulty (Easy/Medium/Hard) and click "Play"
-2. **vs Player** — Enter your name, click "Connect", then invite an online player
+More details (architecture notes, backend routing setup): [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## Architecture
 
@@ -89,7 +92,8 @@ graph TB
     style BTP fill:#e6f4ea,stroke:#1e8e3e
 ```
 
-### WebSocket Protocol — Player vs Player
+<details>
+<summary><b>WebSocket protocol — Player vs Player</b></summary>
 
 ```mermaid
 sequenceDiagram
@@ -120,7 +124,10 @@ sequenceDiagram
     S->>B: gameOver {win}
 ```
 
-### WebSocket Protocol — Player vs AI
+</details>
+
+<details>
+<summary><b>WebSocket protocol — Player vs AI</b></summary>
 
 ```mermaid
 sequenceDiagram
@@ -142,7 +149,11 @@ sequenceDiagram
     S->>P: gameOver {draw}
 ```
 
-### MCTS Algorithm
+</details>
+
+### AI: Monte Carlo Tree Search
+
+The AI runs a classic MCTS loop on the server:
 
 ```mermaid
 graph LR
@@ -156,6 +167,14 @@ graph LR
     style C fill:#e3f2fd,stroke:#1565c0
     style D fill:#fce4ec,stroke:#c62828
 ```
+
+Difficulty is controlled by the number of MCTS iterations per move, with built-in variance to make the AI less predictable:
+
+| Level | MCTS iterations | Behavior |
+|-------|-----------------|----------|
+| Easy | 50–150 | Makes frequent mistakes |
+| Medium | 400–600 | Plays reasonably well |
+| Hard | 1800–2200 | Near-optimal play |
 
 ## Project Structure
 
@@ -184,17 +203,7 @@ graph LR
 | Auth | SAP XSUAA |
 | Deploy | SAP MTA, HTML5 App Repository |
 
-## AI Difficulty Levels
-
-| Level | MCTS Iterations | Behavior |
-|-------|----------------|----------|
-| Easy | 50–150 | Makes frequent mistakes |
-| Medium | 400–600 | Plays reasonably well |
-| Hard | 1800–2200 | Near-optimal play |
-
-Iteration counts have built-in variance to make AI less predictable.
-
-## Build for SAP BTP
+## Deploy to SAP BTP
 
 ```bash
 # Install MTA Build Tool
@@ -207,7 +216,7 @@ mbt build
 cf deploy mta_archives/mta_tic-tac-toe_0.0.1.mtar
 ```
 
-Note: The WebSocket server (`server/`) is not part of the MTA deployment and must be hosted separately. When deployed, the UI reaches it through the AppRouter `/game-server` route (see [DEVELOPMENT.md](DEVELOPMENT.md) → *Backend routing via the AppRouter*).
+> **Note:** The WebSocket server (`server/`) is not part of the MTA deployment and must be hosted separately. When deployed, the UI reaches it through the AppRouter `/game-server` route (see [DEVELOPMENT.md](DEVELOPMENT.md) → *Backend routing via the AppRouter*).
 
 ## Documentation
 
